@@ -22,7 +22,7 @@
     "release": "electron-builder"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.27.1",
+    "@anthropic-ai/sdk": "^0.32.1",
     "@aptabase/electron": "^0.3.1",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.1",
