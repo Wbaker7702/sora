@@ -111,7 +111,7 @@ export function safeRemoveQuotes(input: string, quoteChar: string = '"'): string
   const escapedQuote = quoteChar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   
   // Use global flag to replace all occurrences
-  const regex = new RegExp(`^${escapedQuote}|${escapedQuote}$`, 'g');
+  const regex = new RegExp(escapedQuote, 'g');
   return input.replace(regex, '').trim();
 }
 
