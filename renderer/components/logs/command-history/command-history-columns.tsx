@@ -7,6 +7,7 @@ import { useRouter } from "next/router";
 import { useToast } from "components/ui/use-toast";
 import { Play, Copy, Info } from "lucide-react";
 import { useCopyToClipboard } from "react-use";
+import { escapeHtml, sanitizeCommandText } from "lib/sanitization";
 
 import { Button } from "components/ui/button";
 import { Badge } from "components/ui/badge";
@@ -125,7 +126,9 @@ export const createCommandHistoryColumns = (
       accessorKey: "command",
       header: "Command",
       cell: ({ row }) => (
-        <div className="max-w-xs truncate">{row.original.command}</div>
+        <div className="max-w-xs truncate" title={escapeHtml(row.original.command)}>
+          {escapeHtml(row.original.command)}
+        </div>
       ),
     },
     {
@@ -152,7 +155,7 @@ export const createCommandHistoryColumns = (
                   </DialogTitle>
                   <DialogDescription className="pt-2">
                     <pre className="bg-white text-black shadow-lg border border-black p-2 pl-3 rounded-md">
-                      {row.original.command}
+                      {escapeHtml(row.original.command)}
                     </pre>
                   </DialogDescription>
                 </DialogHeader>
@@ -165,23 +168,26 @@ export const createCommandHistoryColumns = (
             <Button
               onClick={async () => {
                 const { path, command, subcommand } = row.original;
+                const sanitizedCommand = sanitizeCommandText(command);
+                const sanitizedPath = sanitizeCommandText(path);
+                
                 if (subcommand === "lab") {
                   // Extract the specific command after "lab xdr"
                   router.push({
                     pathname: `/lab/[command]`,
-                    query: { command: command },
+                    query: { command: sanitizedCommand },
                   });
                 } else {
-                  const exist = await isExists(path);
+                  const exist = await isExists(sanitizedPath);
                   if (exist) {
                     router.push({
                       pathname: `/contracts/[path]`,
-                      query: { path, command },
+                      query: { path: sanitizedPath, command: sanitizedCommand },
                     });
                   } else {
                     toast({
                       title: "Path Not Found",
-                      description: `Project does not exist at "${path}" `,
+                      description: `Project does not exist at "${escapeHtml(sanitizedPath)}" `,
                     });
                   }
                 }
@@ -191,12 +197,13 @@ export const createCommandHistoryColumns = (
             </Button>
             <Button
               onClick={() => {
-                copyToClipboard(row.original.command);
+                const sanitizedCommand = sanitizeCommandText(row.original.command);
+                copyToClipboard(sanitizedCommand);
                 toast({
                   title: "Copied to Clipboard",
                   description: (
                     <pre className="bg-gray-100 text-black p-1 px-2 rounded-md mt-1">
-                      {row.original.command}
+                      {escapeHtml(sanitizedCommand)}
                     </pre>
                   ),
                 });

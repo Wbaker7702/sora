@@ -5,6 +5,7 @@ import { createContractsColumns } from "components/contracts/contracts-columns";
 import { ContractsDataTable } from "components/contracts/contracts-data-table";
 import NoContracts from "components/contracts/no-contracts";
 import Loading from "components/common/loading";
+import { createSafeFilename, validateFileExtension } from "lib/sanitization";
 
 export default function CanistersComponent() {
   const [allContracts, setAllContracts] = useState([]);
@@ -18,7 +19,15 @@ export default function CanistersComponent() {
       const contractFiles = await window.sorobanApi.listContracts(projectPath);
 
       const contractsArray = contractFiles.map((filePath) => {
-        const name = filePath.split("/").pop().replace(".rs", "");
+        const filename = filePath.split("/").pop() || "";
+        let name = filename;
+        
+        // Only remove .rs extension if it's a valid Rust file
+        if (validateFileExtension(filename, ['.rs'])) {
+          name = createSafeFilename(filename.replace(/\.rs$/, ""));
+        } else {
+          name = createSafeFilename(filename);
+        }
 
         return {
           name,

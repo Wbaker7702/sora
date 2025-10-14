@@ -73,9 +73,18 @@ export class CommandBuilderProvider implements vscode.WebviewViewProvider {
                     ${commands
                       .map(
                         (cmd) =>
-                          `<vscode-option value="${cmd.value}" ${
+                          `<vscode-option value="${cmd.value.replace(/[;&|`$(){}[\]\\]/g, '')}" ${
                             cmd.value === "build" ? "selected" : ""
-                          }>${cmd.label}</vscode-option>`
+                          }>${cmd.label.replace(/[<>&"']/g, (char) => {
+                            const escapeMap: { [key: string]: string } = {
+                              '<': '&lt;',
+                              '>': '&gt;',
+                              '&': '&amp;',
+                              '"': '&quot;',
+                              "'": '&#x27;'
+                            };
+                            return escapeMap[char] || char;
+                          })}</vscode-option>`
                       )
                       .join("")}
                 </vscode-dropdown>

@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { CommandHistoryDataTable } from "components/logs/command-history/command-history-data-table";
 import { createCommandHistoryColumns } from "components/logs/command-history/command-history-columns";
+import { 
+  safeRemoveQuotes, 
+  safeReplaceNewlines, 
+  sanitizeCommandOutput,
+  validateAndSanitizeInput 
+} from "lib/sanitization";
 
 interface LogEntry {
   date: string;
@@ -57,20 +63,23 @@ export default function CommandHistory() {
           const resultIndex = command.indexOf("Result:");
           const result =
             resultIndex !== -1
-              ? command
-                  .slice(resultIndex + 8)
-                  .trim()
-                  .replace(/^"/, "")
-                  .replace(/"$/, "")
-                  .replace(/\\n/g, "\n")
+              ? sanitizeCommandOutput(
+                  safeReplaceNewlines(
+                    safeRemoveQuotes(
+                      command.slice(resultIndex + 8).trim()
+                    )
+                  )
+                )
               : "";
 
           // Remove the result from the command
-          const commandWithoutResult = command
-            .slice(0, resultIndex)
-            .trim()
-            .replace(path, "")
-            .trim();
+          const commandWithoutResult = validateAndSanitizeInput(
+            command
+              .slice(0, resultIndex)
+              .trim()
+              .replace(path, "")
+              .trim()
+          );
 
           return {
             date: date,

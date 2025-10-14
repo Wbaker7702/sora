@@ -117,11 +117,23 @@ function initCommandBuilder(commandData, vscode) {
     const selectedCommand = commandSelect.value;
     let command = `soroban contract ${selectedCommand}`;
 
+    // Sanitize function to prevent command injection
+    function sanitizeInput(input) {
+      if (!input || typeof input !== 'string') return '';
+      return input
+        .replace(/[;&|`$(){}[\]\\]/g, '') // Remove shell metacharacters
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+    }
+
     optionsContainer
       .querySelectorAll("vscode-text-field[data-type='arg']")
       .forEach((input) => {
         if (input.value) {
-          command += ` ${input.value}`;
+          const sanitizedValue = sanitizeInput(input.value);
+          if (sanitizedValue) {
+            command += ` ${sanitizeInput(input.value)}`;
+          }
         }
       });
 
@@ -131,9 +143,12 @@ function initCommandBuilder(commandData, vscode) {
       )
       .forEach((input) => {
         if (input.tagName === "VSCODE-CHECKBOX" && input.checked) {
-          command += ` ${input.dataset.name}`;
+          command += ` ${sanitizeInput(input.dataset.name)}`;
         } else if (input.tagName === "VSCODE-TEXT-FIELD" && input.value) {
-          command += ` ${input.dataset.name} ${input.value}`;
+          const sanitizedValue = sanitizeInput(input.value);
+          if (sanitizedValue) {
+            command += ` ${sanitizeInput(input.dataset.name)} ${sanitizedValue}`;
+          }
         }
       });
 
