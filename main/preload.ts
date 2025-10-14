@@ -141,6 +141,42 @@ const handler = {
   getConversation: async (assistantType: "general" | "cli") => {
     return ipcRenderer.invoke("openai:getConversation", assistantType);
   },
+  // Cursor Agent APIs
+  cursor: {
+    saveApiKey: async (apiKey: string) => {
+      return ipcRenderer.invoke("cursor:saveApiKey", apiKey);
+    },
+    getApiKey: async () => {
+      return ipcRenderer.invoke("cursor:getApiKey");
+    },
+    deleteApiKey: async () => {
+      return ipcRenderer.invoke("cursor:deleteApiKey");
+    },
+    getAgentInfo: async () => {
+      return ipcRenderer.invoke("cursor:getAgentInfo");
+    },
+    createConversation: async () => {
+      return ipcRenderer.invoke("cursor:createConversation");
+    },
+    sendMessage: async (conversationId: string, message: string) => {
+      return ipcRenderer.invoke("cursor:sendMessage", conversationId, message);
+    },
+    getMessages: async (conversationId: string) => {
+      return ipcRenderer.invoke("cursor:getMessages", conversationId);
+    },
+    saveConversation: async (conversationId: string) => {
+      return ipcRenderer.invoke("cursor:saveConversation", conversationId);
+    },
+    getConversation: async () => {
+      return ipcRenderer.invoke("cursor:getConversation");
+    },
+    clearConversation: async () => {
+      return ipcRenderer.invoke("cursor:clearConversation");
+    },
+    mockResponse: async (message: string) => {
+      return ipcRenderer.invoke("cursor:mockResponse", message);
+    },
+  },
 };
 
 contextBridge.exposeInMainWorld("sorobanApi", handler);

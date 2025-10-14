@@ -18,6 +18,7 @@ import { checkEditors } from "./helpers/check-editors";
 import { openProjectInEditor } from "./helpers/open-project-in-editor";
 import { handleContractEvents } from "./helpers/manage-contract-events";
 import * as OpenAIHelper from "./helpers/openai-helper";
+import * as CursorAgentHelper from "./helpers/cursor-agent-helper";
 
 const path = require("node:path");
 const fs = require("fs");
@@ -251,6 +252,54 @@ if (isProd) {
       return await OpenAIHelper.getConversation(store, assistantType);
     }
   );
+
+  // Cursor Agent handlers
+  ipcMain.handle("cursor:saveApiKey", async (_, apiKey: string) => {
+    return await CursorAgentHelper.saveCursorApiKey(apiKey);
+  });
+
+  ipcMain.handle("cursor:getApiKey", async () => {
+    return await CursorAgentHelper.getCursorApiKey();
+  });
+
+  ipcMain.handle("cursor:deleteApiKey", async () => {
+    return await CursorAgentHelper.deleteCursorApiKey();
+  });
+
+  ipcMain.handle("cursor:getAgentInfo", async () => {
+    return await CursorAgentHelper.getCursorAgentInfo();
+  });
+
+  ipcMain.handle("cursor:createConversation", async () => {
+    return await CursorAgentHelper.createCursorAgentConversation();
+  });
+
+  ipcMain.handle(
+    "cursor:sendMessage",
+    async (_, conversationId: string, message: string) => {
+      return await CursorAgentHelper.sendMessageToCursorAgent(conversationId, message);
+    }
+  );
+
+  ipcMain.handle("cursor:getMessages", async (_, conversationId: string) => {
+    return await CursorAgentHelper.getCursorAgentMessages(conversationId);
+  });
+
+  ipcMain.handle("cursor:saveConversation", async (_, conversationId: string) => {
+    return await CursorAgentHelper.saveCursorConversation(store, conversationId);
+  });
+
+  ipcMain.handle("cursor:getConversation", async () => {
+    return await CursorAgentHelper.getCursorConversation(store);
+  });
+
+  ipcMain.handle("cursor:clearConversation", async () => {
+    return await CursorAgentHelper.clearCursorConversation(store);
+  });
+
+  ipcMain.handle("cursor:mockResponse", async (_, message: string) => {
+    return await CursorAgentHelper.mockCursorAgentResponse(message);
+  });
 
   ipcMain.handle("check-editors", async () => {
     return await checkEditors();

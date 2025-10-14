@@ -904,9 +904,9 @@
     global-agent "^3.0.0"
 
 "@electron/node-gyp@git+https://github.com/electron/node-gyp.git#06b29aafb7708acef8b3669835c8a7857ebc92d2":
-  version "10.2.0-electron.2"
-  resolved "git+ssh://git@github.com/electron/node-gyp.git"
-  integrity sha512-VJvV/zMGIB8PV6cw1jex5174XwyO0IX2xYPmj9M9qWkyqGOsv9fs4Z/0fwykzrKouSakhBqLZnKrJPQ5nYSOyA==
+  version "10.2.0-electron.1"
+  resolved "git+ssh://git@github.com/electron/node-gyp.git#06b29aafb7708acef8b3669835c8a7857ebc92d2"
+  integrity sha512-CrYo6TntjpoMO1SHjl5Pa/JoUsECNqNdB7Kx49WLQpWzPw53eEITJ2Hs9fh/ryUYDn4pxZz11StaBYBrLFJdqg==
   dependencies:
     env-paths "^2.2.0"
     exponential-backoff "^3.1.1"
@@ -1041,12 +1041,24 @@
   resolved "https://registry.npmjs.org/@img/sharp-libvips-linux-x64/-/sharp-libvips-linux-x64-1.2.3.tgz"
   integrity sha512-3JU7LmR85K6bBiRzSUc/Ff9JBVIFVvq6bomKE0e63UXGeRw2HPVEjoJke1Yx+iU4rL7/7kUjES4dZ/81Qjhyxg==
 
+"@img/sharp-libvips-linuxmusl-x64@1.2.3":
+  version "1.2.3"
+  resolved "https://registry.npmjs.org/@img/sharp-libvips-linuxmusl-x64/-/sharp-libvips-linuxmusl-x64-1.2.3.tgz"
+  integrity sha512-U5PUY5jbc45ANM6tSJpsgqmBF/VsL6LnxJmIf11kB7J5DctHgqm0SkuXzVWtIY90GnJxKnC/JT251TDnk1fu/g==
+
 "@img/sharp-linux-x64@0.34.4":
   version "0.34.4"
   resolved "https://registry.npmjs.org/@img/sharp-linux-x64/-/sharp-linux-x64-0.34.4.tgz"
   integrity sha512-ZfGtcp2xS51iG79c6Vhw9CWqQC8l2Ot8dygxoDoIQPTat/Ov3qAa8qpxSrtAEAJW+UjTXc4yxCjNfxm4h6Xm2A==
   optionalDependencies:
     "@img/sharp-libvips-linux-x64" "1.2.3"
+
+"@img/sharp-linuxmusl-x64@0.34.4":
+  version "0.34.4"
+  resolved "https://registry.npmjs.org/@img/sharp-linuxmusl-x64/-/sharp-linuxmusl-x64-0.34.4.tgz"
+  integrity sha512-lU0aA5L8QTlfKjpDCEFOZsTYGn3AEiO6db8W5aQDxj0nQkVrZWmN3ZP9sYKWJdtq3PWPhUNlqehWyXpYDcI9Sg==
+  optionalDependencies:
+    "@img/sharp-libvips-linuxmusl-x64" "1.2.3"
 
 "@isaacs/balanced-match@^4.0.1":
   version "4.0.1"
@@ -1132,6 +1144,11 @@
   version "15.5.5"
   resolved "https://registry.npmjs.org/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-15.5.5.tgz"
   integrity sha512-tI+sBu+3FmWtqlqD4xKJcj3KJtqbniLombKTE7/UWyyoHmOyAo3aZ7QcEHIOgInXOG1nt0rwh0KGmNbvSB0Djg==
+
+"@next/swc-linux-x64-musl@15.5.5":
+  version "15.5.5"
+  resolved "https://registry.npmjs.org/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-15.5.5.tgz"
+  integrity sha512-kDRh+epN/ulroNJLr+toDjN+/JClY5L+OAWjOrrKCI0qcKvTw9GBx7CU/rdA2bgi4WpZN3l0rf/3+b8rduEwrQ==
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -5112,10 +5129,15 @@ postject@^1.0.0-alpha.6:
   dependencies:
     commander "^9.4.0"
 
-prismjs@^1.30.0, prismjs@~1.27.0:
+prismjs@^1.30.0:
   version "1.30.0"
   resolved "https://registry.npmjs.org/prismjs/-/prismjs-1.30.0.tgz"
   integrity sha512-DEvV2ZF2r2/63V+tK8hQvrR2ZGn10srHbXviTlcv7Kpzw8jWiNTqbVgjO3IY8RxrrOUF8VPMQQFysYYYv0YZxw==
+
+prismjs@~1.27.0:
+  version "1.27.0"
+  resolved "https://registry.npmjs.org/prismjs/-/prismjs-1.27.0.tgz"
+  integrity sha512-t13BGPUlFDR7wRB5kQDG4jjl7XeuH6jbJGt11JHPL96qwsEHNX2+68tFXqc1/k+/jALsbSWJKUOT/hcYAZ5LkA==
 
 proc-log@^2.0.1:
   version "2.0.1"

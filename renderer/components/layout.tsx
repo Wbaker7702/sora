@@ -28,6 +28,7 @@ import {
   BookIcon,
   BookKeyIcon,
   RadioIcon,
+  BotIcon,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -152,7 +153,15 @@ export default function Layout({ children }: LayoutProps) {
                           ? "default"
                           : "ghost",
                       },
-
+                      {
+                        title: "Cursor Agent",
+                        label: "",
+                        href: "/cursor-agent",
+                        icon: BotIcon,
+                        variant: router.pathname.startsWith("/cursor-agent")
+                          ? "default"
+                          : "ghost",
+                      },
                       {
                         title: "Config",
                         label: "",
