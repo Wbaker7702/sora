@@ -358,7 +358,7 @@ export function validateMultiplePatterns(patterns: string[]): Map<string, RegexV
 export const COMMON_PATTERNS = {
   // The infamous [a-zA-z] pattern
   PROBLEMATIC_ALPHA: {
-    pattern: /[a-zA-z]/,
+    pattern: /[a-zA-Z]/,
     issue: 'Includes unexpected characters: [ \\ ] ^ _ `',
     fix: /[a-zA-Z]/
   },
