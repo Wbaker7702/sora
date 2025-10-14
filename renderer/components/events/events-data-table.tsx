@@ -10,6 +10,8 @@ import {
   ColumnFiltersState,
   getFilteredRowModel,
   SortingState,
+  getGlobalFilteredRowModel,
+  GlobalFilterState,
 } from "@tanstack/react-table";
 
 import {
@@ -23,6 +25,7 @@ import {
 
 import { Button } from "components/ui/button";
 import { Input } from "components/ui/input";
+import { Badge } from "components/ui/badge";
 
 import {
   ChevronLeftIcon,
@@ -39,21 +42,48 @@ import {
   SelectValue,
 } from "components/ui/select";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "components/ui/dropdown-menu";
+
+import { MoreHorizontal, Play, Edit, Trash2, Filter, X } from "lucide-react";
+
 import ContractEventModal from "components/events/event-modal";
+import { EditContractEventModal } from "components/events/edit-event-modal";
+import { RemoveContractEventModal } from "components/events/remove-event-modal";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: any[];
+  onEdit?: (event: any) => void;
+  onDelete?: (event: any) => void;
+  onTrigger?: (event: any) => void;
 }
 
 export function EventsDataTable<TData, TValue>({
   columns,
   data,
+  onEdit,
+  onDelete,
+  onTrigger,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
   const [showCreateContractEventsDialog, setShowCreateContractEventsDialog] =
     useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [commandOutput, setCommandOutput] = useState<string>("");
+  const [commandError, setCommandError] = useState<string>("");
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   const table = useReactTable({
     data,
@@ -62,6 +92,8 @@ export function EventsDataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    getGlobalFilteredRowModel: getGlobalFilteredRowModel(),
+    onGlobalFilterChange: setGlobalFilter,
     initialState: {
       pagination: {
         pageSize: 5,
@@ -71,32 +103,209 @@ export function EventsDataTable<TData, TValue>({
     state: {
       sorting,
       columnFilters,
+      globalFilter,
     },
   });
 
+  const handleEditEvent = (event: any) => {
+    if (onEdit) {
+      onEdit(event);
+    } else {
+      setSelectedEvent(event);
+      setShowEditDialog(true);
+    }
+  };
+
+  const handleDeleteEvent = (event: any) => {
+    if (onDelete) {
+      onDelete(event);
+    } else {
+      setSelectedEvent(event);
+      setShowDeleteDialog(true);
+    }
+  };
+
+  const handleTriggerCommand = async (event: any) => {
+    if (onTrigger) {
+      onTrigger(event);
+    }
+    setIsExecuting(true);
+    setCommandOutput("");
+    setCommandError("");
+    
+    try {
+      // Build the command arguments and flags
+      const args = [
+        `--start-ledger ${event.startLedger}`,
+        event.cursor ? `--cursor "${event.cursor}"` : "",
+        event.rpcUrl ? `--rpc-url "${event.rpcUrl}"` : "",
+        event.networkPassphrase ? `--network-passphrase "${event.networkPassphrase}"` : "",
+        event.network ? `--network "${event.network}"` : "",
+      ].filter(Boolean);
+      
+      const flags = [
+        event.output ? `--output ${event.output}` : null,
+        event.count ? `--count ${event.count}` : null,
+        event.contractId ? `--id ${event.contractId}` : null,
+        event.topicFilters ? `--topic ${event.topicFilters}` : null,
+        event.eventType ? `--type ${event.eventType}` : null,
+        event.useGlobalConfig ? "--global" : null,
+        event.configDir ? `--config-dir "${event.configDir}"` : null,
+      ].filter(Boolean);
+
+      // Execute the command using the soroban API
+      const result = await window.sorobanApi.runSorobanCommand(
+        "soroban",
+        "events",
+        args,
+        flags,
+        event.configDir || undefined
+      );
+      
+      setCommandOutput(result);
+    } catch (error: any) {
+      setCommandError(error.message || "Command execution failed");
+    } finally {
+      setIsExecuting(false);
+    }
+  };
+
+  const clearFilters = () => {
+    setColumnFilters([]);
+    setGlobalFilter("");
+  };
+
   return (
-    <div>
-      <div className="flex items-center mt-3 mb-6 space-x-4">
-        <Input
-          placeholder="Search Between Contract Events"
-          value={
-            (table.getColumn("startLedger")?.getFilterValue() as string) ?? ""
-          }
-          onChange={(event) =>
-            table.getColumn("startLedger")?.setFilterValue(event.target.value)
-          }
-          className="w-full"
-        />
+    <div className="space-y-4">
+      {/* Header with search and actions */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4 flex-1">
+          <Input
+            placeholder="Search all contract events..."
+            value={globalFilter ?? ""}
+            onChange={(event) => setGlobalFilter(event.target.value)}
+            className="max-w-sm"
+          />
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center space-x-2"
+          >
+            <Filter className="h-4 w-4" />
+            <span>Filters</span>
+            {Object.keys(columnFilters).length > 0 && (
+              <Badge variant="secondary" className="ml-1">
+                {Object.keys(columnFilters).length}
+              </Badge>
+            )}
+          </Button>
+          {Object.keys(columnFilters).length > 0 && (
+            <Button variant="ghost" onClick={clearFilters} size="sm">
+              <X className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          )}
+        </div>
         <Button onClick={() => setShowCreateContractEventsDialog(true)}>
           Add New Contract Event
         </Button>
-        <ContractEventModal
-          showCreateContractEventDialog={showCreateContractEventsDialog}
-          setShowCreateContractEventialog={setShowCreateContractEventsDialog}
-        />
       </div>
+
+      {/* Advanced Filters */}
+      {showFilters && (
+        <div className="p-4 border rounded-lg bg-muted/50">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Start Ledger</label>
+              <Input
+                placeholder="Filter by start ledger..."
+                value={(table.getColumn("startLedger")?.getFilterValue() as string) ?? ""}
+                onChange={(event) =>
+                  table.getColumn("startLedger")?.setFilterValue(event.target.value)
+                }
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Network</label>
+              <Input
+                placeholder="Filter by network..."
+                value={(table.getColumn("network")?.getFilterValue() as string) ?? ""}
+                onChange={(event) =>
+                  table.getColumn("network")?.setFilterValue(event.target.value)
+                }
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">RPC URL</label>
+              <Input
+                placeholder="Filter by RPC URL..."
+                value={(table.getColumn("rpcUrl")?.getFilterValue() as string) ?? ""}
+                onChange={(event) =>
+                  table.getColumn("rpcUrl")?.setFilterValue(event.target.value)
+                }
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Event Type</label>
+              <Select
+                value={(table.getColumn("eventType")?.getFilterValue() as string) ?? ""}
+                onValueChange={(value) =>
+                  table.getColumn("eventType")?.setFilterValue(value === "all" ? "" : value)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="contract">Contract</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Command Output Section */}
+      {(commandOutput || commandError) && (
+        <div className="p-4 border rounded-lg bg-muted/50">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-semibold">Command Output</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setCommandOutput("");
+                setCommandError("");
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="bg-black text-green-400 p-4 rounded font-mono text-sm overflow-x-auto">
+            {commandError ? (
+              <div className="text-red-400">{commandError}</div>
+            ) : (
+              <pre className="whitespace-pre-wrap">{commandOutput}</pre>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Loading indicator for command execution */}
+      {isExecuting && (
+        <div className="p-4 border rounded-lg bg-muted/50">
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+            <span>Executing command...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Data Table */}
       <div className="max-h-[calc(85vh-130px)] overflow-y-auto">
-        <div className="rounded-md border ">
+        <div className="rounded-md border">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -139,7 +348,7 @@ export function EventsDataTable<TData, TValue>({
                     colSpan={columns.length}
                     className="h-[54vh] text-center"
                   >
-                    No contract events found with the given start ledger!
+                    No contract events found with the current filters!
                   </TableCell>
                 </TableRow>
               )}
@@ -223,6 +432,34 @@ export function EventsDataTable<TData, TValue>({
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <ContractEventModal
+        showCreateContractEventDialog={showCreateContractEventsDialog}
+        setShowCreateContractEventialog={setShowCreateContractEventsDialog}
+      />
+      
+      {selectedEvent && (
+        <>
+          <EditContractEventModal
+            contractEvent={selectedEvent}
+            isOpen={showEditDialog}
+            onClose={() => {
+              setShowEditDialog(false);
+              setSelectedEvent(null);
+            }}
+          />
+          
+          <RemoveContractEventModal
+            contractEvent={selectedEvent}
+            isOpen={showDeleteDialog}
+            onClose={() => {
+              setShowDeleteDialog(false);
+              setSelectedEvent(null);
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }

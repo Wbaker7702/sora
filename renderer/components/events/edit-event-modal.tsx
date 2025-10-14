@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 
 import { Checkbox } from "components/ui/checkbox";
 import { ScrollArea, ScrollBar } from "components/ui/scroll-area";
@@ -69,20 +69,61 @@ export const EditContractEventModal = ({ contractEvent, isOpen, onClose }) => {
     z.infer<typeof editContractEventFormSchema>
   >({
     resolver: zodResolver(editContractEventFormSchema),
+    defaultValues: {
+      start_ledger: contractEvent?.startLedger?.toString() || "",
+      cursor: contractEvent?.cursor || "",
+      output: contractEvent?.output || "pretty",
+      count: contractEvent?.count?.toString() || "",
+      contract_id: contractEvent?.contractId || "",
+      topic_filters: contractEvent?.topicFilters || "",
+      event_type: contractEvent?.eventType || "all",
+      is_global: contractEvent?.useGlobalConfig || false,
+      config_dir: contractEvent?.configDir || "",
+      rpc_url: contractEvent?.rpcUrl || "",
+      network_passphrase: contractEvent?.networkPassphrase || "",
+      network: contractEvent?.network || "",
+    },
   });
+
+  // Reset form when contractEvent changes
+  React.useEffect(() => {
+    if (contractEvent) {
+      editContractEventForm.reset({
+        start_ledger: contractEvent.startLedger?.toString() || "",
+        cursor: contractEvent.cursor || "",
+        output: contractEvent.output || "pretty",
+        count: contractEvent.count?.toString() || "",
+        contract_id: contractEvent.contractId || "",
+        topic_filters: contractEvent.topicFilters || "",
+        event_type: contractEvent.eventType || "all",
+        is_global: contractEvent.useGlobalConfig || false,
+        config_dir: contractEvent.configDir || "",
+        rpc_url: contractEvent.rpcUrl || "",
+        network_passphrase: contractEvent.networkPassphrase || "",
+        network: contractEvent.network || "",
+      });
+    }
+  }, [contractEvent, editContractEventForm]);
 
   const handleEditContractEventFormSubmit = async (data) => {
     setIsSubmittingEditContractEvent(true);
     try {
       await onEditContractEventFormSubmit(data).then((res) => {
-        //@ts-ignore
         if (res) {
-          //   toast(identityAddSuccess(data.identity_name));
+          toast({
+            title: "Success",
+            description: `Contract event ${data.start_ledger} has been updated successfully.`,
+          });
           editContractEventForm.reset();
+          onClose();
         }
       });
     } catch (error) {
-      //   toast(identityAddError(data.identity_name, error));
+      toast({
+        title: "Error",
+        description: `Failed to update contract event: ${error.message}`,
+        variant: "destructive",
+      });
     } finally {
       setIsSubmittingEditContractEvent(false);
     }

@@ -26,14 +26,37 @@ export default function EventsComponent() {
     }
   }, [contractEvents]);
 
-  const columns = createContractEventsColumns();
+  // Handler functions for the columns
+  const handleEditEvent = (event: any) => {
+    console.log("Edit event:", event);
+  };
+
+  const handleDeleteEvent = (event: any) => {
+    console.log("Delete event:", event);
+  };
+
+  const handleTriggerEvent = (event: any) => {
+    console.log("Trigger event:", event);
+  };
+
+  const columns = createContractEventsColumns(
+    handleEditEvent,
+    handleDeleteEvent,
+    handleTriggerEvent
+  );
 
   return (
     <div className="flex flex-col h-[calc(100vh-106px)]">
       {isLoading ? (
         <Loading />
       ) : allContractEvents.length >= 0 ? (
-        <EventsDataTable columns={columns} data={allContractEvents} />
+        <EventsDataTable 
+          columns={columns} 
+          data={allContractEvents}
+          onEdit={handleEditEvent}
+          onDelete={handleDeleteEvent}
+          onTrigger={handleTriggerEvent}
+        />
       ) : (
         <NoEvents />
       )}

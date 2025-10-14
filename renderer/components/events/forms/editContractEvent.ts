@@ -35,31 +35,26 @@ export async function onEditContractEventFormSubmit(
   data: z.infer<typeof editContractEventFormSchema>
 ) {
   try {
-    const command = "soroban";
-    const subcommand = "events";
-    const args = [
-      `--start-ledger ${data.start_ledger}`,
-      `--cursor "${data.cursor}"`,
-      data.rpc_url ? `--rpc-url "${data.rpc_url}"` : "",
-      data.network_passphrase
-        ? `--network-passphrase "${data.network_passphrase}"`
-        : "",
-      data.network ? `--network "${data.network}"` : "",
-    ].filter(Boolean);
-    const flags = [
-      data.output ? `--output ${data.output}` : null,
-      data.count ? `--count ${data.count}` : null,
-      data.contract_id ? `--id ${data.contract_id}` : null,
-      data.topic_filters ? `--topic ${data.topic_filters}` : null,
-      data.event_type ? `--type ${data.event_type}` : null,
-      data.is_global ? "--global" : null,
-      data.config_dir ? `--config-dir "${data.config_dir}"` : null,
-    ].filter(Boolean);
-
-    // await window.sorobanApi.manageContractEvents("add", data);
-    // await window.sorobanApi.reloadApplication();
+    // Update the contract event in the store
+    await window.sorobanApi.manageContractEvents("update", {
+      start_ledger: data.start_ledger,
+      cursor: data.cursor,
+      output: data.output,
+      count: data.count,
+      contract_id: data.contract_id,
+      topic_filters: data.topic_filters,
+      event_type: data.event_type,
+      is_global: data.is_global,
+      config_dir: data.config_dir,
+      rpc_url: data.rpc_url,
+      network_passphrase: data.network_passphrase,
+      network: data.network,
+    });
+    
+    await window.sorobanApi.reloadApplication();
+    return true;
   } catch (error) {
-    console.error("Error on adding contract event:", error);
+    console.error("Error on editing contract event:", error);
     throw error;
   }
 }
