@@ -11,7 +11,7 @@ files:
       - app
 afterSign: "scripts/notarize.js"
 mac:
-  notarize: { teamId: "FPJS89TYWV" }
+  notarize: true
   hardenedRuntime: true
   gatekeeperAssess: false
   entitlements: "scripts/entitlements.mac.plist"

@@ -65,9 +65,9 @@ export function CommandGenerator({ isOpen, onClose }: CommandGeneratorProps) {
 
   function renderMessageContent(content: string): React.ReactNode {
     return (
-      <ReactMarkdown
-        className="prose dark:prose-invert max-w-none break-words whitespace-pre-wrap"
-        components={{
+      <div className="prose dark:prose-invert max-w-none break-words whitespace-pre-wrap">
+        <ReactMarkdown
+          components={{
           p: ({ node, ...props }) => <p className="mb-2" {...props} />,
           ul: ({ node, ...props }) => (
             <ul className="list-disc pl-4 mb-2" {...props} />
@@ -86,6 +86,7 @@ export function CommandGenerator({ isOpen, onClose }: CommandGeneratorProps) {
       >
         {content}
       </ReactMarkdown>
+      </div>
     );
   }
 
