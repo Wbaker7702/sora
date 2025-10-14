@@ -63,7 +63,9 @@ type PopoverTriggerProps = React.ComponentPropsWithoutRef<
   typeof PopoverTrigger
 >;
 
-interface TeamSwitcherProps extends PopoverTriggerProps {}
+interface TeamSwitcherProps extends PopoverTriggerProps {
+  className?: string;
+}
 
 export default function IdentitySwitcher({ className }: TeamSwitcherProps) {
   const [open, setOpen] = React.useState(false);

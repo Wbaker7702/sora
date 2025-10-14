@@ -37,9 +37,9 @@ interface Message {
 
 function renderMessageContent(content: Message["content"]): React.ReactNode {
   return (
-    <ReactMarkdown
-      className="prose dark:prose-invert max-w-none"
-      components={{
+    <div className="prose dark:prose-invert max-w-none">
+      <ReactMarkdown
+        components={{
         p: ({ node, ...props }) => <p className="mb-0" {...props} />,
         ul: ({ node, ...props }) => (
           <ul className="list-disc pl-4 mb-2" {...props} />
@@ -51,6 +51,7 @@ function renderMessageContent(content: Message["content"]): React.ReactNode {
     >
       {content[0].text.value}
     </ReactMarkdown>
+    </div>
   );
 }
 

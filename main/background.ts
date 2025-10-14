@@ -1,4 +1,4 @@
-const fixPath = require("fix-path");
+import fixPath from "fix-path";
 fixPath();
 
 import { app, ipcMain, dialog } from "electron";
