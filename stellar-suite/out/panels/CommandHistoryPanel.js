@@ -88,8 +88,19 @@ class CommandHistoryPanel {
                     const vscode = acquireVsCodeApi();
                     document.getElementById('command-list').addEventListener('click', (e) => {
                         if (e.target.classList.contains('run-btn')) {
-                            const command = e.target.parentElement.textContent.replace('Run', '').trim();
-                            vscode.postMessage({ command: 'runCommand', text: command });
+                            // Safely extract command text and sanitize it
+                            const rawCommand = e.target.parentElement.textContent || '';
+                            const command = rawCommand.replace(/^Run\s*/, '').trim();
+                            
+                            // Basic sanitization to prevent command injection
+                            const sanitizedCommand = command
+                                .replace(/[;&|`$(){}[\]\\]/g, '') // Remove shell metacharacters
+                                .replace(/\s+/g, ' ') // Normalize whitespace
+                                .trim();
+                            
+                            if (sanitizedCommand) {
+                                vscode.postMessage({ command: 'runCommand', text: sanitizedCommand });
+                            }
                         }
                     });
                 </script>
