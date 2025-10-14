@@ -365,7 +365,7 @@ export const COMMON_PATTERNS = {
   
   // Unescaped dash in character class
   UNESCAPED_DASH: {
-    pattern: /[a-zA-Z0-9%=.,-_]/,
+    pattern: /[a-zA-Z0-9%=.,\-_]/,
     issue: 'Dash creates unintended range from , to _',
     fix: /[a-zA-Z0-9%=.,\-_]/
   },
