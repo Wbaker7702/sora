@@ -19,19 +19,19 @@ export function handleContractEvents(store, action, contractSettings) {
       break;
 
     case "update":
-      // Validate that contractSettings is an object with the required `contract_id`
+      // Validate that contractSettings is an object with the required `start_ledger`
       if (
         typeof contractSettings === "object" &&
         !Array.isArray(contractSettings) &&
-        contractSettings.contract_id
+        contractSettings.start_ledger
       ) {
         const index = contracts.findIndex(
-          (c) => c.contract_id === contractSettings.contract_id
+          (c) => c.start_ledger === contractSettings.start_ledger
         );
         if (index !== -1) {
           contracts[index] = { ...contracts[index], ...contractSettings }; // Update the object
         } else {
-          throw new Error("Contract to update not found");
+          throw new Error("Contract event to update not found");
         }
       } else {
         throw new Error("Invalid contract settings for update");
@@ -39,14 +39,14 @@ export function handleContractEvents(store, action, contractSettings) {
       break;
 
     case "remove":
-      // Validate contractSettings and check for `contract_id`
+      // Validate contractSettings and check for `start_ledger`
       if (
         typeof contractSettings === "object" &&
         !Array.isArray(contractSettings) &&
-        contractSettings.contract_id
+        contractSettings.start_ledger
       ) {
         contracts = contracts.filter(
-          (c) => c.contract_id !== contractSettings.contract_id
+          (c) => c.start_ledger !== contractSettings.start_ledger
         ); // Remove from the array
       } else {
         throw new Error("Invalid contract settings for remove");
@@ -54,9 +54,9 @@ export function handleContractEvents(store, action, contractSettings) {
       break;
 
     case "get":
-      if (contractSettings.contract_id) {
+      if (contractSettings.start_ledger) {
         const contract = contracts.find(
-          (c) => c.contract_id === contractSettings.contract_id
+          (c) => c.start_ledger === contractSettings.start_ledger
         );
         return contract || null; // Return the found object or null
       }

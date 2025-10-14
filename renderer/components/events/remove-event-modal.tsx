@@ -59,11 +59,19 @@ export const RemoveContractEventModal = ({
     setIsSubmittingRemoveContractEvent(true);
     try {
       await onRemoveContractEventFormSubmit(data).then(() => {
-        toast(identityRemoveSuccess(data.identity_name));
+        toast({
+          title: "Success",
+          description: `Contract event ${data.startLedger} has been removed successfully.`,
+        });
         removeContractEventForm.reset();
+        onClose();
       });
     } catch (error) {
-      toast(identityRemoveError(data.identity_name, error));
+      toast({
+        title: "Error",
+        description: `Failed to remove contract event: ${error.message}`,
+        variant: "destructive",
+      });
     } finally {
       setIsSubmittingRemoveContractEvent(false);
     }
