@@ -1,0 +1,142 @@
+pull_request_rules:
+  - name: Auto-merge dependency updates
+    conditions:
+      - author=app/dependabot
+      - status-success=CodeQL
+      - status-success=ESLint
+      - status-success=Lint Code Base
+      - status-success=SonarCloud analysis
+      - -status-pending
+      - -status-failure
+      - -status-cancelled
+      - -status-skipped
+    actions:
+      merge:
+        method: squash
+        commit_message: title_and_body
+        strict: smart+fastpath
+
+  - name: Auto-merge security fixes
+    conditions:
+      - author=app/dependabot
+      - label=security
+      - status-success=CodeQL
+      - status-success=ESLint
+      - status-success=Lint Code Base
+      - -status-pending
+      - -status-failure
+      - -status-cancelled
+      - -status-skipped
+    actions:
+      merge:
+        method: squash
+        commit_message: title_and_body
+        strict: smart+fastpath
+
+  - name: Auto-merge minor updates
+    conditions:
+      - author=app/dependabot
+      - label=dependencies
+      - -label=security
+      - -label=javascript
+      - status-success=CodeQL
+      - status-success=ESLint
+      - status-success=Lint Code Base
+      - -status-pending
+      - -status-failure
+      - -status-cancelled
+      - -status-skipped
+    actions:
+      merge:
+        method: squash
+        commit_message: title_and_body
+        strict: smart+fastpath
+
+  - name: Auto-merge GitHub Actions updates
+    conditions:
+      - author=app/dependabot
+      - label=github-actions
+      - status-success=CodeQL
+      - status-success=ESLint
+      - status-success=Lint Code Base
+      - -status-pending
+      - -status-failure
+      - -status-cancelled
+      - -status-skipped
+    actions:
+      merge:
+        method: squash
+        commit_message: title_and_body
+        strict: smart+fastpath
+
+  - name: Auto-merge approved PRs
+    conditions:
+      - -author=app/dependabot
+      - check-success=CodeQL
+      - check-success=ESLint
+      - check-success=Lint Code Base
+      - check-success=SonarCloud analysis
+      - approved-reviews-by=1
+      - -status-pending
+      - -status-failure
+      - -status-cancelled
+      - -status-skipped
+    actions:
+      merge:
+        method: squash
+        commit_message: title_and_body
+        strict: smart+fastpath
+
+  - name: Auto-merge hotfixes
+    conditions:
+      - -author=app/dependabot
+      - label=hotfix
+      - check-success=CodeQL
+      - check-success=ESLint
+      - check-success=Lint Code Base
+      - approved-reviews-by=1
+      - -status-pending
+      - -status-failure
+      - -status-cancelled
+      - -status-skipped
+    actions:
+      merge:
+        method: squash
+        commit_message: title_and_body
+        strict: smart+fastpath
+
+  - name: Close invalid PRs
+    conditions:
+      - -author=app/dependabot
+      - -draft
+      - -conflict
+      - check-failure=CodeQL
+      - check-failure=ESLint
+      - check-failure=Lint Code Base
+    actions:
+      close:
+        message: |
+          This PR has been automatically closed because it failed required checks.
+          
+          Please fix the issues and reopen the PR.
+
+  - name: Request review for large changes
+    conditions:
+      - -author=app/dependabot
+      - files~=^renderer/.*$
+      - files~=^main/.*$
+      - -draft
+    actions:
+      request_review:
+        users:
+          - "tolgayayci"
+
+  - name: Add labels based on files
+    conditions:
+      - -author=app/dependabot
+    actions:
+      label:
+        add:
+          - "needs-review"
+        remove:
+          - "needs-review"
