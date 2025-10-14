@@ -18,6 +18,9 @@ import {
   ResizablePanelGroup,
 } from "components/ui/resizable";
 import { ChatbotButton } from "components/chatbot/chatbot-button";
+import { KeyboardShortcuts } from "components/common/keyboard-shortcuts";
+import { PerformanceMonitor } from "components/common/performance-monitor";
+import { ErrorBoundary } from "components/common/error-boundary";
 
 import {
   HomeIcon,
@@ -53,10 +56,10 @@ export default function Layout({ children }: LayoutProps) {
   }, []);
 
   return (
-    <>
-      <div className="flex flex-col h-screen w-full">
-        {" "}
-        <header className="flex flex-row items-center space-x-4 py-4 w-full justify-between border-b pl-1 pr-4">
+    <ErrorBoundary>
+      <KeyboardShortcuts>
+        <div className="flex flex-col h-screen w-full">
+          <header className="flex flex-row items-center space-x-4 py-4 w-full justify-between border-b pl-1 pr-4">
           {theme === "dark" ? (
             <Image
               key={theme}
@@ -203,9 +206,11 @@ export default function Layout({ children }: LayoutProps) {
               <main>{children}</main>
             </ResizablePanel>
           </ResizablePanelGroup>
-        </TooltipProvider>
-      </div>
-      <Toaster />
-    </>
+          </TooltipProvider>
+        </div>
+        <Toaster />
+        <PerformanceMonitor enabled={process.env.NODE_ENV === "development"} />
+      </KeyboardShortcuts>
+    </ErrorBoundary>
   );
 }
