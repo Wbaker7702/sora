@@ -1,8 +1,8 @@
 import * as React from "react";
-import { Button } from "components/ui/button";
-import { Textarea } from "components/ui/textarea";
-import { Sheet, SheetContent } from "components/ui/sheet";
-import { ScrollArea } from "components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import ReactMarkdown from "react-markdown";
 import {
   MaximizeIcon,
@@ -21,8 +21,8 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from "components/ui/dialog";
-import { Input } from "components/ui/input";
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface Message {
   role: "user" | "assistant";
@@ -86,12 +86,11 @@ export function ChatbotDrawer({
   const initializeChat = async () => {
     try {
       setIsLoading(true);
-      console.log("Initializing chat...");
+      setError(null);
 
       const existingConversation = await window.sorobanApi.getConversation(
         "general"
       );
-      console.log("Existing conversation:", existingConversation);
 
       if (
         existingConversation &&
@@ -104,7 +103,6 @@ export function ChatbotDrawer({
           const existingMessages = await window.sorobanApi.getMessages(
             existingConversation.threadId
           );
-          console.log("Existing messages:", existingMessages);
           if (existingMessages && existingMessages.length > 0) {
             setMessages(existingMessages);
           } else {
@@ -115,9 +113,6 @@ export function ChatbotDrawer({
           await createNewConversation();
         }
       } else {
-        console.log(
-          "No valid existing conversation found. Creating a new one."
-        );
         await createNewConversation();
       }
     } catch (error) {
@@ -129,21 +124,23 @@ export function ChatbotDrawer({
   };
 
   const createNewConversation = async () => {
-    console.log("Creating new conversation...");
-    const assistant = await window.sorobanApi.createGeneralAssistant();
-    console.log("Created assistant:", assistant);
-    setAssistantId(assistant.id);
-    const thread = await window.sorobanApi.createThread();
-    console.log("Created thread:", thread);
-    setThreadId(thread.id);
+    try {
+      const assistant = await window.sorobanApi.createGeneralAssistant();
+      setAssistantId(assistant.id);
+      const thread = await window.sorobanApi.createThread();
+      setThreadId(thread.id);
 
-    setDefaultMessage();
+      setDefaultMessage();
 
-    await window.sorobanApi.saveConversation(
-      thread.id,
-      assistant.id,
-      "general"
-    );
+      await window.sorobanApi.saveConversation(
+        thread.id,
+        assistant.id,
+        "general"
+      );
+    } catch (error) {
+      console.error("Error creating new conversation:", error);
+      throw error;
+    }
   };
 
   const checkApiKey = async () => {
@@ -186,18 +183,18 @@ export function ChatbotDrawer({
   const sendMessage = async () => {
     if (inputText.trim() === "" || isLoading) return;
 
+    const messageText = inputText.trim();
     setIsLoading(true);
     setError(null);
 
     try {
-      console.log("Sending message:", inputText);
       const newUserMessage: Message = {
         role: "user",
         content: [
           {
             type: "text",
             text: {
-              value: inputText,
+              value: messageText,
               annotations: [],
             },
           },
@@ -206,32 +203,27 @@ export function ChatbotDrawer({
       setMessages((prevMessages) => [newUserMessage, ...prevMessages]);
       setInputText("");
 
-      const newMessage = await window.sorobanApi.sendMessage(
-        threadId,
-        inputText
-      );
-      console.log("New message sent:", newMessage);
+      await window.sorobanApi.sendMessage(threadId, messageText);
 
-      console.log("Running assistant...");
       const run = await window.sorobanApi.runAssistant(threadId, assistantId);
-      console.log("Run created:", run);
 
       let runStatus = await window.sorobanApi.getRunStatus(threadId, run.id);
-      console.log("Initial run status:", runStatus);
+      let attempts = 0;
+      const maxAttempts = 30; // 30 second timeout
 
-      while (runStatus !== "completed" && runStatus !== "failed") {
+      while (runStatus !== "completed" && runStatus !== "failed" && attempts < maxAttempts) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         runStatus = await window.sorobanApi.getRunStatus(threadId, run.id);
-        console.log("Updated run status:", runStatus);
+        attempts++;
       }
 
       if (runStatus === "completed") {
-        console.log("Run completed. Fetching updated messages...");
         const updatedMessages = await window.sorobanApi.getMessages(threadId);
-        console.log("Updated messages:", updatedMessages);
         setMessages(updatedMessages);
-      } else {
+      } else if (runStatus === "failed") {
         throw new Error("Assistant run failed");
+      } else {
+        throw new Error("Assistant run timed out");
       }
 
       await window.sorobanApi.saveConversation(
@@ -240,7 +232,11 @@ export function ChatbotDrawer({
         "general"
       );
     } catch (err) {
-      setError("An error occurred while processing the message.");
+      setError(
+        err instanceof Error 
+          ? err.message 
+          : "An error occurred while processing the message."
+      );
       console.error("Error in sendMessage:", err);
     } finally {
       setIsLoading(false);
@@ -273,6 +269,13 @@ export function ChatbotDrawer({
   const handleCancelApiKey = () => {
     setApiKeyModalOpen(false);
     onClose();
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
   };
 
   return (
@@ -390,11 +393,13 @@ export function ChatbotDrawer({
 
             <div className="bg-card px-4 py-3 flex items-center gap-2">
               <Textarea
-                placeholder="Type your message..."
+                placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)"
                 className="flex-1 rounded-xl border-2 border-black focus:border-transparent focus:ring-0 resize-none"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={handleKeyPress}
                 disabled={isLoading}
+                rows={1}
               />
               <Button
                 size="icon"
@@ -415,7 +420,9 @@ export function ChatbotDrawer({
               </Button>
             </div>
             {error && (
-              <div className="bg-red-100 text-red-900 px-4 py-2">{error}</div>
+              <div className="bg-destructive/10 text-destructive px-4 py-2 text-sm border-t">
+                {error}
+              </div>
             )}
           </div>
         </SheetContent>

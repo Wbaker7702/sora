@@ -1,5 +1,5 @@
 appId: com.electron.sora
-productName: sora
+productName: Sora
 copyright: Copyright © 2024 Tolga Yaycı
 directories:
   output: dist
@@ -9,6 +9,9 @@ files:
     filter:
       - package.json
       - app
+  - from: "node_modules"
+    filter:
+      - "**/*"
 afterSign: "scripts/notarize.js"
 mac:
   notarize: true
@@ -16,8 +19,56 @@ mac:
   gatekeeperAssess: false
   entitlements: "scripts/entitlements.mac.plist"
   entitlementsInherit: "scripts/entitlements.mac.plist"
+  category: public.app-category.developer-tools
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+    - target: zip
+      arch:
+        - x64
+        - arm64
   publish:
     - provider: github
       protocol: https
 dmg:
   sign: false
+  title: Sora
+  icon: resources/icon.icns
+linux:
+  category: Development
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: snap
+      arch:
+        - x64
+    - target: deb
+      arch:
+        - x64
+  icon: resources/icon.png
+  desktop:
+    entry: Sora
+  publish:
+    - provider: github
+      protocol: https
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  icon: resources/icon.ico
+  publish:
+    - provider: github
+      protocol: https
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Sora
