@@ -5,8 +5,63 @@
 
 version: 2
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "npm"
+    directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "tolgayayci"
+    assignees:
+      - "tolgayayci"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+    ignore:
+      - dependency-name: "electron"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "npm"
+    directory: "/stellar-suite"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "tolgayayci"
+    assignees:
+      - "tolgayayci"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "stellar-suite"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "tolgayayci"
+    assignees:
+      - "tolgayayci"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"
 
