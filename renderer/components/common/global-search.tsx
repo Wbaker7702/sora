@@ -22,10 +22,12 @@ import {
   BookKeyIcon,
   RadioIcon,
   BotIcon,
+  BarChart3Icon,
   SearchIcon,
   FileTextIcon,
   CodeIcon,
   ZapIcon,
+  GitBranchIcon,
 } from "lucide-react";
 
 interface SearchableItem {
@@ -91,6 +93,33 @@ const searchableItems: SearchableItem[] = [
     tags: ["lab", "experimental", "test"],
   },
   {
+    id: "metrics",
+    title: "Metrics",
+    description: "Real-time contract analytics and testing",
+    href: "/metrics",
+    category: "Navigation",
+    icon: BarChart3Icon,
+    tags: ["metrics", "analytics", "testing", "mobile", "visualizer"],
+  },
+  {
+    id: "deployment-pipeline",
+    title: "Deployment Pipeline",
+    description: "Automated testing and deployment workflows",
+    href: "/deployment-pipeline",
+    category: "Navigation",
+    icon: GitBranchIcon,
+    tags: ["pipeline", "deployment", "ci", "cd", "automation"],
+  },
+  {
+    id: "documentation-generator",
+    title: "Documentation Generator",
+    description: "Auto-generate docs from contracts",
+    href: "/documentation-generator",
+    category: "Navigation",
+    icon: FileTextIcon,
+    tags: ["docs", "documentation", "generator", "contracts"],
+  },
+  {
     id: "cursor-agent",
     title: "Cursor Agent",
     description: "AI-powered development assistant",
@@ -153,6 +182,24 @@ const searchableItems: SearchableItem[] = [
     category: "Commands",
     icon: ZapIcon,
     tags: ["run", "execute", "lab"],
+  },
+  {
+    id: "create-pipeline",
+    title: "Create Pipeline",
+    description: "Set up automated deployment pipeline",
+    href: "/deployment-pipeline",
+    category: "Commands",
+    icon: GitBranchIcon,
+    tags: ["pipeline", "create", "deployment"],
+  },
+  {
+    id: "generate-docs",
+    title: "Generate Documentation",
+    description: "Create documentation from contract",
+    href: "/documentation-generator",
+    category: "Commands",
+    icon: FileTextIcon,
+    tags: ["docs", "generate", "documentation"],
   },
 ];
 
