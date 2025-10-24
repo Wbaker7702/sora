@@ -10,8 +10,6 @@ import {
   ColumnFiltersState,
   getFilteredRowModel,
   SortingState,
-  getGlobalFilteredRowModel,
-  GlobalFilterState,
 } from "@tanstack/react-table";
 
 import {
@@ -92,7 +90,6 @@ export function EventsDataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
-    getGlobalFilteredRowModel: getGlobalFilteredRowModel(),
     onGlobalFilterChange: setGlobalFilter,
     initialState: {
       pagination: {

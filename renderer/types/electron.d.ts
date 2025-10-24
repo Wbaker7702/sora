@@ -45,6 +45,7 @@ interface Versions {
   ) => Promise<void>;
   clearConversation: (assistantType: "general" | "cli") => Promise<void>;
   getConversation: (assistantType: "general" | "cli") => Promise<any>;
+  logError: (error: Error, errorInfo?: any) => Promise<void>;
   cursor: {
     saveApiKey: (apiKey: string) => Promise<boolean>;
     getApiKey: () => Promise<string | null>;
