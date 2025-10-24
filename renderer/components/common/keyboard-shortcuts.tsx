@@ -6,6 +6,14 @@ import { useTheme } from "next-themes";
 import { useToast } from "hooks/use-toast";
 import { GlobalSearch } from "./global-search";
 import {
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "components/ui/command";
+import {
   HomeIcon,
   DatabaseIcon,
   MonitorXIcon,
