@@ -69,6 +69,63 @@ You can install the extension on [Visual Studio Marketplace](https://marketplace
 
 > **P.S:** Review the [latest release notes](https://github.com/tolgayayci/sora/releases/tag/v0.2.0) for more information about the features and capabilities of the SORA application.
 
+## Development
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/tolgayayci/sora.git
+cd sora
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+### Building
+
+```bash
+# Build for current platform
+npm run build
+
+# Build for all platforms
+npm run build:all
+
+# Build for specific platform
+npm run build:platform linux
+```
+
+### Testing
+
+```bash
+# Run all tests
+npm run test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run linting
+npm run lint
+```
+
+### Deployment
+
+```bash
+# Deploy locally
+npm run deploy:local
+
+# Deploy to GitHub
+npm run deploy:github
+
+# Create release
+npm run deploy:release
+```
+
+For detailed build and deployment instructions, see our [Build & Deploy Guide](docs/docs/development/build-and-deploy.md).
+
 ## Contributing
 
 We welcome contributions! To contribute:
@@ -76,7 +133,8 @@ We welcome contributions! To contribute:
 1. Fork the repository
 2. Create a new branch
 3. Make your changes
-4. Submit a pull request with a description of your changes
+4. Run tests: `npm run test`
+5. Submit a pull request with a description of your changes
 
 For feature requests or bug reports, please use our issue templates:
 - [Feature Request Template](https://github.com/tolgayayci/sora/issues/new?assignees=tolgayayci&labels=enhancement&projects=&template=feature_request.md&title=%5BFEAT%5D)
