@@ -14,6 +14,9 @@ const handler = {
       ipcRenderer.removeListener(channel, subscription);
     };
   },
+  off(channel: string, callback: (...args: unknown[]) => void) {
+    ipcRenderer.removeListener(channel, callback);
+  },
   node: process.versions.node,
   chrome: process.versions.chrome,
   electron: process.versions.electron,
@@ -142,35 +145,57 @@ const handler = {
     return ipcRenderer.invoke("openai:getConversation", assistantType);
   },
   // Builds API
-  builds: {
-    save: async (build: any) => {
-      return ipcRenderer.invoke("builds:save", build);
-    },
-    getAll: async () => {
-      return ipcRenderer.invoke("builds:getAll");
-    },
-    get: async (id: string) => {
-      return ipcRenderer.invoke("builds:get", id);
-    },
-    delete: async (id: string) => {
-      return ipcRenderer.invoke("builds:delete", id);
-    },
-    getLogs: async (buildId: string) => {
-      return ipcRenderer.invoke("builds:getLogs", buildId);
-    },
-    searchLogs: async (buildId: string, query: string) => {
-      return ipcRenderer.invoke("builds:searchLogs", buildId, query);
-    },
-    saveLogs: async (buildId: string, logs: string) => {
-      return ipcRenderer.invoke("builds:saveLogs", buildId, logs);
-    },
-    on: (event: string, callback: (...args: unknown[]) => void) => {
-      return handler.on(event, callback);
-    },
-    off: (event: string, callback: (...args: unknown[]) => void) => {
-      return handler.off(event, callback);
-    },
-  },
+  builds: (() => {
+    const subscriptions = new Map<
+      string,
+      Map<(...args: unknown[]) => void, () => void>
+    >();
+
+    return {
+      save: async (build: any) => {
+        return ipcRenderer.invoke("builds:save", build);
+      },
+      getAll: async () => {
+        return ipcRenderer.invoke("builds:getAll");
+      },
+      get: async (id: string) => {
+        return ipcRenderer.invoke("builds:get", id);
+      },
+      delete: async (id: string) => {
+        return ipcRenderer.invoke("builds:delete", id);
+      },
+      getLogs: async (buildId: string) => {
+        return ipcRenderer.invoke("builds:getLogs", buildId);
+      },
+      searchLogs: async (buildId: string, query: string) => {
+        return ipcRenderer.invoke("builds:searchLogs", buildId, query);
+      },
+      saveLogs: async (buildId: string, logs: string) => {
+        return ipcRenderer.invoke("builds:saveLogs", buildId, logs);
+      },
+      on: (event: string, callback: (...args: unknown[]) => void) => {
+        const unsubscribe = handler.on(event, callback);
+        if (!subscriptions.has(event)) {
+          subscriptions.set(event, new Map());
+        }
+        subscriptions.get(event)!.set(callback, unsubscribe);
+        return unsubscribe;
+      },
+      off: (event: string, callback: (...args: unknown[]) => void) => {
+        const eventSubscriptions = subscriptions.get(event);
+        if (eventSubscriptions) {
+          const unsubscribe = eventSubscriptions.get(callback);
+          if (unsubscribe) {
+            unsubscribe();
+            eventSubscriptions.delete(callback);
+            if (eventSubscriptions.size === 0) {
+              subscriptions.delete(event);
+            }
+          }
+        }
+      },
+    };
+  })(),
   // Cursor Agent APIs
   cursor: {
     saveApiKey: async (apiKey: string) => {
