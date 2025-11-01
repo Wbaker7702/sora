@@ -18,24 +18,22 @@ import { Badge } from "components/ui/badge";
 
 import { Coins, Plus } from "lucide-react";
 import NasacoinModal from "components/nasacoin-core/nasacoin-modal";
+import NasacoinDetailModal from "components/nasacoin-core/nasacoin-detail-modal";
+import TransferModal from "components/nasacoin-core/transfer-modal";
 import { ScrollArea, ScrollBar } from "components/ui/scroll-area";
 import NoNasacoin from "components/nasacoin-core/no-nasacoin";
+import type { Nasacoin } from "types/nasacoin";
 
 const NasacoinCard = ({
   nasacoin,
   onNasacoinChange,
+  onViewDetails,
+  onTransfer,
 }: {
-  nasacoin: {
-    id: string;
-    name: string;
-    symbol: string;
-    contractId: string;
-    network: string;
-    balance?: string;
-    decimals: number;
-    createdAt: string;
-  };
+  nasacoin: Nasacoin;
   onNasacoinChange: () => void;
+  onViewDetails: (nasacoin: Nasacoin) => void;
+  onTransfer: (nasacoin: Nasacoin) => void;
 }) => {
   return (
     <Card className="col-span-1" key={nasacoin.id}>
@@ -81,20 +79,14 @@ const NasacoinCard = ({
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => {
-              // Handle view details
-              console.log("View details for", nasacoin.id);
-            }}
+            onClick={() => onViewDetails(nasacoin)}
           >
             View Details
           </Button>
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => {
-              // Handle transfer
-              console.log("Transfer", nasacoin.id);
-            }}
+            onClick={() => onTransfer(nasacoin)}
           >
             Transfer
           </Button>
@@ -107,8 +99,11 @@ const NasacoinCard = ({
 export default function NasacoinCoreComponent() {
   const [showCreateNasacoinDialog, setShowCreateNasacoinDialog] =
     useState(false);
-  const [nasacoins, setNasacoins] = useState<any[]>([]);
+  const [nasacoins, setNasacoins] = useState<Nasacoin[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedNasacoin, setSelectedNasacoin] = useState<Nasacoin | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
 
   async function checkNasacoins() {
     try {
@@ -166,6 +161,25 @@ export default function NasacoinCoreComponent() {
           onNasacoinChange={refreshNasacoins}
         />
       </div>
+      <NasacoinDetailModal
+        nasacoin={selectedNasacoin}
+        isOpen={showDetailModal}
+        onClose={() => {
+          setShowDetailModal(false);
+          setSelectedNasacoin(null);
+        }}
+      />
+      <TransferModal
+        nasacoin={selectedNasacoin}
+        isOpen={showTransferModal}
+        onClose={() => {
+          setShowTransferModal(false);
+          setSelectedNasacoin(null);
+        }}
+        onSuccess={() => {
+          refreshNasacoins();
+        }}
+      />
       {nasacoins?.length > 0 ? (
         <div>
           <div className="my-6">
