@@ -8,11 +8,12 @@ const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/renderer/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
   testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/renderer/$1',
     '^components/(.*)$': '<rootDir>/renderer/components/$1',
     '^lib/(.*)$': '<rootDir>/renderer/lib/$1',
     '^hooks/(.*)$': '<rootDir>/renderer/hooks/$1',
+    '^vscode$': '<rootDir>/stellar-suite/__mocks__/vscode.js',
   },
   collectCoverageFrom: [
     'renderer/**/*.{js,jsx,ts,tsx}',

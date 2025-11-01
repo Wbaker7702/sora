@@ -15,6 +15,7 @@ export function escapeHtml(input: string): string {
   
   return input
     .replace(/&/g, '&amp;')
+    .replace(/(?<!<)\//g, '&#x2F;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
@@ -48,11 +49,11 @@ export function escapeJson(input: string): string {
   return input
     .replace(/\\/g, '\\\\')
     .replace(/"/g, '\\"')
-    .replace(/\n/g, '\\n')
     .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n')
     .replace(/\t/g, '\\t')
-    .replace(/\b/g, '\\b')
-    .replace(/\f/g, '\\f');
+    .replace(/\f/g, '\\f')
+    .replace(/\x08/g, '\\b');
 }
 
 /**
@@ -90,29 +91,36 @@ export function sanitizeCommandOutput(input: string): string {
     return '';
   }
   
+  const ansiPattern = /\x1B\[[0-?]*[ -\/]*[@-~]/g;
+
   return input
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
-    .replace(/\x1b\[[0-9;]*m/g, '') // Remove ANSI escape codes
+    .replace(ansiPattern, '')
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
     .trim();
 }
 
 /**
  * Safely removes quotes from a string using proper regex with global flag
  * @param input - The string to process
- * @param quoteChar - The quote character to remove (default: ")
+ * @param quoteChar - The quote character(s) to remove. Defaults to both double and single quotes.
  * @returns String with quotes removed
  */
-export function safeRemoveQuotes(input: string, quoteChar: string = '"'): string {
+export function safeRemoveQuotes(input: string, quoteChar?: string): string {
   if (typeof input !== 'string') {
     return '';
   }
   
-  // Escape the quote character for regex
-  const escapedQuote = quoteChar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  
-  // Use global flag to replace all occurrences
-  const regex = new RegExp(escapedQuote, 'g');
-  return input.replace(regex, '').trim();
+  const targets = quoteChar ? [quoteChar] : ['"', "'"];
+
+  let result = input;
+
+  for (const target of targets) {
+    const escapedTarget = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const edgeRegex = new RegExp(`^${escapedTarget}|${escapedTarget}$`, 'g');
+    result = result.replace(edgeRegex, '');
+  }
+
+  return result.trim();
 }
 
 /**
@@ -161,8 +169,7 @@ export function sanitizeCommandText(input: string): string {
   
   // Remove dangerous characters that could be used for command injection
   return input
-    .replace(/[;&|`$(){}[\]\\]/g, '') // Remove shell metacharacters
-    .replace(/\s+/g, ' ') // Normalize whitespace
+    .replace(/[;&|`$(){}[\]\\]/g, '')
     .trim();
 }
 
@@ -190,14 +197,23 @@ export function validateFileExtension(
  * @returns Safe filename
  */
 export function createSafeFilename(input: string): string {
-  if (typeof input !== 'string') {
+  if (typeof input !== 'string' || input.length === 0) {
     return 'unnamed';
   }
-  
-  return input
-    .replace(/[^a-zA-Z0-9._-]/g, '_') // Replace non-alphanumeric chars with underscore
-    .replace(/_+/g, '_') // Collapse multiple underscores
-    .replace(/^_|_$/g, '') // Remove leading/trailing underscores
-    .substring(0, 100) // Limit length
-    || 'unnamed';
+
+  const segments = input
+    .replace(/\\/g, '/')
+    .split('/')
+    .filter(Boolean)
+    .filter(segment => segment !== '.' && segment !== '..')
+    .map(segment => segment.replace(/[^a-zA-Z0-9._-]/g, '_'))
+    .filter(Boolean);
+
+  const joined = segments.join('_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+
+  if (!joined) {
+    return 'unnamed';
+  }
+
+  return joined.substring(0, 100);
 }
