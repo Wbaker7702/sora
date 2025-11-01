@@ -25,6 +25,7 @@ import {
 import { PipelineConfig } from "./PipelineConfig";
 import { PipelineHistory } from "./PipelineHistory";
 import { PipelineLogs } from "./PipelineLogs";
+import { BuildRecord } from "types/builds";
 
 interface PipelineStep {
   id: string;
@@ -47,65 +48,66 @@ interface Pipeline {
   trigger: "manual" | "git" | "schedule";
 }
 
-const mockPipelines: Pipeline[] = [
-  {
-    id: "1",
-    name: "Production Deploy",
-    project: "my-soroban-contract",
-    status: "completed",
-    steps: [
-      { id: "1", name: "Code Checkout", status: "completed", duration: 2 },
-      { id: "2", name: "Install Dependencies", status: "completed", duration: 15 },
-      { id: "3", name: "Run Tests", status: "completed", duration: 45 },
-      { id: "4", name: "Build Contract", status: "completed", duration: 30 },
-      { id: "5", name: "Deploy to Testnet", status: "completed", duration: 60 },
-      { id: "6", name: "Run Integration Tests", status: "completed", duration: 120 },
-      { id: "7", name: "Deploy to Mainnet", status: "completed", duration: 90 },
-    ],
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-01-15T11:45:00Z",
-    duration: 362,
-    trigger: "manual"
-  },
-  {
-    id: "2",
-    name: "Feature Branch Deploy",
-    project: "token-contract",
-    status: "running",
-    steps: [
-      { id: "1", name: "Code Checkout", status: "completed", duration: 3 },
-      { id: "2", name: "Install Dependencies", status: "completed", duration: 12 },
-      { id: "3", name: "Run Tests", status: "running", duration: 0 },
-      { id: "4", name: "Build Contract", status: "pending" },
-      { id: "5", name: "Deploy to Testnet", status: "pending" },
-    ],
-    createdAt: "2024-01-15T14:20:00Z",
-    updatedAt: "2024-01-15T14:22:00Z",
-    trigger: "git"
-  },
-  {
-    id: "3",
-    name: "Scheduled Deploy",
-    project: "governance-contract",
-    status: "failed",
-    steps: [
-      { id: "1", name: "Code Checkout", status: "completed", duration: 2 },
-      { id: "2", name: "Install Dependencies", status: "completed", duration: 18 },
-      { id: "3", name: "Run Tests", status: "failed", duration: 5, error: "Test failure in governance_test.rs" },
-      { id: "4", name: "Build Contract", status: "skipped" },
-      { id: "5", name: "Deploy to Testnet", status: "skipped" },
-    ],
-    createdAt: "2024-01-15T08:00:00Z",
-    updatedAt: "2024-01-15T08:25:00Z",
-    duration: 25,
-    trigger: "schedule"
-  }
-];
+// Convert BuildRecord to Pipeline format
+const convertToPipeline = (build: BuildRecord): Pipeline => {
+  return {
+    id: build.id,
+    name: build.name,
+    project: build.project,
+    status: build.status,
+    steps: [], // Steps will be populated from config if available
+    createdAt: build.createdAt,
+    updatedAt: build.completedAt || build.createdAt,
+    duration: build.duration,
+    trigger: build.trigger,
+  };
+};
 
 export default function DeploymentPipelineComponent() {
-  const [pipelines, setPipelines] = useState<Pipeline[]>(mockPipelines);
+  const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [selectedPipeline, setSelectedPipeline] = useState<Pipeline | null>(null);
   const [activeTab, setActiveTab] = useState("pipelines");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadPipelines() {
+      try {
+        const builds = await window.sorobanApi.builds.getAll();
+        const convertedPipelines = builds.map(convertToPipeline);
+        setPipelines(convertedPipelines);
+      } catch (error) {
+        console.error("Failed to load pipelines:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadPipelines();
+
+    // Subscribe to build updates
+    const handleBuildUpdate = (build: BuildRecord) => {
+      setPipelines((prev) => {
+        const index = prev.findIndex((p) => p.id === build.id);
+        if (index !== -1) {
+          // Update existing
+          const updated = [...prev];
+          updated[index] = convertToPipeline(build);
+          return updated;
+        } else {
+          // Add new
+          return [convertToPipeline(build), ...prev];
+        }
+      });
+    };
+
+    window.sorobanApi.builds.on("build:completed", handleBuildUpdate);
+    window.sorobanApi.builds.on("build:updated", handleBuildUpdate);
+
+    return () => {
+      window.sorobanApi.builds.off("build:completed", handleBuildUpdate);
+      window.sorobanApi.builds.off("build:updated", handleBuildUpdate);
+    };
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -159,11 +161,11 @@ export default function DeploymentPipelineComponent() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button>
+          <Button onClick={() => setActiveTab("config")}>
             <SettingsIcon className="h-4 w-4 mr-2" />
             Configure Pipeline
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => setActiveTab("history")}>
             <HistoryIcon className="h-4 w-4 mr-2" />
             View History
           </Button>
@@ -179,8 +181,25 @@ export default function DeploymentPipelineComponent() {
         </TabsList>
 
         <TabsContent value="pipelines" className="space-y-4">
-          <div className="grid gap-4">
-            {pipelines.map((pipeline) => (
+          {loading ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <p className="text-muted-foreground">Loading pipelines...</p>
+              </CardContent>
+            </Card>
+          ) : pipelines.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <HistoryIcon className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Builds Found</h3>
+                <p className="text-muted-foreground text-center">
+                  Start by running a build to see it appear here
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {pipelines.map((pipeline) => (
               <Card key={pipeline.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -208,45 +227,53 @@ export default function DeploymentPipelineComponent() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">
-                          {pipeline.steps.filter(s => s.status === "completed").length}
+                    {pipeline.steps.length > 0 ? (
+                      <>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-600">
+                              {pipeline.steps.filter(s => s.status === "completed").length}
+                            </div>
+                            <div className="text-sm text-muted-foreground">Completed</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-600">
+                              {pipeline.steps.filter(s => s.status === "running").length}
+                            </div>
+                            <div className="text-sm text-muted-foreground">Running</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-red-600">
+                              {pipeline.steps.filter(s => s.status === "failed").length}
+                            </div>
+                            <div className="text-sm text-muted-foreground">Failed</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-gray-600">
+                              {pipeline.steps.filter(s => s.status === "pending").length}
+                            </div>
+                            <div className="text-sm text-muted-foreground">Pending</div>
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">Completed</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">
-                          {pipeline.steps.filter(s => s.status === "running").length}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Running</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-red-600">
-                          {pipeline.steps.filter(s => s.status === "failed").length}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Failed</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-gray-600">
-                          {pipeline.steps.filter(s => s.status === "pending").length}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Pending</div>
-                      </div>
-                    </div>
 
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Progress</span>
-                        <span>
-                          {pipeline.steps.filter(s => s.status === "completed").length} / {pipeline.steps.length}
-                        </span>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span>Progress</span>
+                            <span>
+                              {pipeline.steps.filter(s => s.status === "completed").length} / {pipeline.steps.length}
+                            </span>
+                          </div>
+                          <Progress 
+                            value={(pipeline.steps.filter(s => s.status === "completed").length / pipeline.steps.length) * 100} 
+                            className="h-2"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        Platform: {build.platform} • Created: {new Date(pipeline.createdAt).toLocaleString()}
                       </div>
-                      <Progress 
-                        value={(pipeline.steps.filter(s => s.status === "completed").length / pipeline.steps.length) * 100} 
-                        className="h-2"
-                      />
-                    </div>
+                    )}
 
                     <div className="flex gap-2">
                       {pipeline.status === "idle" && (
@@ -261,6 +288,12 @@ export default function DeploymentPipelineComponent() {
                           Stop Pipeline
                         </Button>
                       )}
+                      <Button variant="outline" onClick={() => {
+                        setSelectedPipeline(pipeline);
+                        setActiveTab("logs");
+                      }}>
+                        View Logs
+                      </Button>
                       <Button variant="outline" onClick={() => setSelectedPipeline(pipeline)}>
                         View Details
                       </Button>
@@ -268,8 +301,9 @@ export default function DeploymentPipelineComponent() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="config">

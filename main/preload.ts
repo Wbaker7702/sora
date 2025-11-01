@@ -141,6 +141,36 @@ const handler = {
   getConversation: async (assistantType: "general" | "cli") => {
     return ipcRenderer.invoke("openai:getConversation", assistantType);
   },
+  // Builds API
+  builds: {
+    save: async (build: any) => {
+      return ipcRenderer.invoke("builds:save", build);
+    },
+    getAll: async () => {
+      return ipcRenderer.invoke("builds:getAll");
+    },
+    get: async (id: string) => {
+      return ipcRenderer.invoke("builds:get", id);
+    },
+    delete: async (id: string) => {
+      return ipcRenderer.invoke("builds:delete", id);
+    },
+    getLogs: async (buildId: string) => {
+      return ipcRenderer.invoke("builds:getLogs", buildId);
+    },
+    searchLogs: async (buildId: string, query: string) => {
+      return ipcRenderer.invoke("builds:searchLogs", buildId, query);
+    },
+    saveLogs: async (buildId: string, logs: string) => {
+      return ipcRenderer.invoke("builds:saveLogs", buildId, logs);
+    },
+    on: (event: string, callback: (...args: unknown[]) => void) => {
+      return handler.on(event, callback);
+    },
+    off: (event: string, callback: (...args: unknown[]) => void) => {
+      return handler.off(event, callback);
+    },
+  },
   // Cursor Agent APIs
   cursor: {
     saveApiKey: async (apiKey: string) => {

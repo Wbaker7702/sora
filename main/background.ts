@@ -1,7 +1,7 @@
 import fixPath from "fix-path";
 fixPath();
 
-import { app, ipcMain, dialog } from "electron";
+import { app, ipcMain, dialog, BrowserWindow } from "electron";
 import serve from "electron-serve";
 const { readFile } = require("fs").promises;
 
@@ -101,6 +101,57 @@ const schema = {
     default: {
       threadId: "",
       assistantId: "",
+    },
+  },
+  builds: {
+    type: "array",
+    default: [],
+    items: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        name: { type: "string" },
+        project: { type: "string" },
+        platform: {
+          type: "string",
+          enum: ["mac", "linux", "win32", "win64", "mac-universal"],
+        },
+        status: {
+          type: "string",
+          enum: ["idle", "running", "completed", "failed", "paused"],
+        },
+        trigger: {
+          type: "string",
+          enum: ["manual", "git", "schedule"],
+        },
+        createdAt: { type: "string" },
+        completedAt: { type: "string" },
+        duration: { type: "number" },
+        error: { type: "string" },
+        commitHash: { type: "string" },
+        commitMessage: { type: "string" },
+        logPath: { type: "string" },
+      },
+      required: ["id", "name", "project", "platform", "status", "createdAt"],
+    },
+  },
+  buildConfigs: {
+    type: "array",
+    default: [],
+    items: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        name: { type: "string" },
+        project: { type: "string" },
+        trigger: {
+          type: "string",
+          enum: ["manual", "git", "schedule"],
+        },
+        gitBranch: { type: "string" },
+        schedule: { type: "string" },
+      },
+      required: ["id", "name", "project"],
     },
   },
 };
@@ -612,6 +663,155 @@ if (isProd) {
       }
     }
   );
+
+  // Builds IPC Handlers
+  const getBuildLogPath = (buildId: string): string => {
+    const userData = app.getPath("userData");
+    const buildDir = path.join(userData, "builds", buildId);
+    return path.join(buildDir, "logs.txt");
+  };
+
+  ipcMain.handle("builds:save", async (event, build) => {
+    try {
+      const builds = store.get("builds", []);
+      builds.push(build);
+      store.set("builds", builds);
+
+      // Save logs to file if provided
+      if (build.logPath || build.logs) {
+        const logPath = getBuildLogPath(build.id);
+        const buildDir = path.dirname(logPath);
+        if (!fs.existsSync(buildDir)) {
+          fs.mkdirSync(buildDir, { recursive: true });
+        }
+        const logContent = build.logs || "";
+        fs.writeFileSync(logPath, logContent, "utf-8");
+      }
+
+      // Notify renderer
+      const mainWindow = BrowserWindow.getAllWindows()[0];
+      if (mainWindow) {
+        mainWindow.webContents.send("build:completed", build);
+      }
+
+      return true;
+    } catch (error) {
+      log.error(`Error saving build: ${error}`);
+      return false;
+    }
+  });
+
+  ipcMain.handle("builds:getAll", async () => {
+    try {
+      return store.get("builds", []);
+    } catch (error) {
+      log.error(`Error getting builds: ${error}`);
+      return [];
+    }
+  });
+
+  ipcMain.handle("builds:get", async (event, id: string) => {
+    try {
+      const builds = store.get("builds", []);
+      return builds.find((b: any) => b.id === id) || null;
+    } catch (error) {
+      log.error(`Error getting build: ${error}`);
+      return null;
+    }
+  });
+
+  ipcMain.handle("builds:delete", async (event, id: string) => {
+    try {
+      const builds = store.get("builds", []);
+      const filtered = builds.filter((b: any) => b.id !== id);
+      store.set("builds", filtered);
+
+      // Delete log files
+      const logPath = getBuildLogPath(id);
+      if (fs.existsSync(logPath)) {
+        const buildDir = path.dirname(logPath);
+        fs.rmSync(buildDir, { recursive: true, force: true });
+      }
+
+      return true;
+    } catch (error) {
+      log.error(`Error deleting build: ${error}`);
+      return false;
+    }
+  });
+
+  ipcMain.handle("builds:getLogs", async (event, buildId: string) => {
+    try {
+      const logPath = getBuildLogPath(buildId);
+      if (fs.existsSync(logPath)) {
+        const data = await readFile(logPath, "utf-8");
+        return data;
+      }
+      return "";
+    } catch (error) {
+      log.error(`Error reading build logs: ${error}`);
+      return "";
+    }
+  });
+
+  ipcMain.handle("builds:searchLogs", async (event, buildId: string, query: string) => {
+    try {
+      const logPath = getBuildLogPath(buildId);
+      if (!fs.existsSync(logPath)) {
+        return [];
+      }
+
+      const logContent = await readFile(logPath, "utf-8");
+      const lines = logContent.split("\n");
+      const matches: any[] = [];
+
+      const regex = new RegExp(query, "gi");
+      lines.forEach((line, index) => {
+        const lineMatches: number[] = [];
+        let match;
+        while ((match = regex.exec(line)) !== null) {
+          lineMatches.push(match.index);
+        }
+        if (lineMatches.length > 0) {
+          matches.push({
+            line: index + 1,
+            content: line,
+            matches: lineMatches,
+          });
+        }
+      });
+
+      return matches;
+    } catch (error) {
+      log.error(`Error searching build logs: ${error}`);
+      return [];
+    }
+  });
+
+  ipcMain.handle("builds:saveLogs", async (event, buildId: string, logs: string) => {
+    try {
+      const logPath = getBuildLogPath(buildId);
+      const buildDir = path.dirname(logPath);
+      if (!fs.existsSync(buildDir)) {
+        fs.mkdirSync(buildDir, { recursive: true });
+      }
+      fs.writeFileSync(logPath, logs, "utf-8");
+      return true;
+    } catch (error) {
+      log.error(`Error saving build logs: ${error}`);
+      return false;
+    }
+  });
+
+  // Build watchers for real-time updates
+  const buildWatchers = new Set<Electron.WebContents>();
+
+  ipcMain.handle("builds:subscribe", (event) => {
+    buildWatchers.add(event.sender);
+    event.sender.on("destroyed", () => {
+      buildWatchers.delete(event.sender);
+    });
+  });
 
   async function retrieveAndStoreIdentities() {
     try {

@@ -28,6 +28,7 @@ import {
   CodeIcon,
   ZapIcon,
   GitBranchIcon,
+  HistoryIcon,
 } from "lucide-react";
 
 interface SearchableItem {
@@ -200,6 +201,25 @@ const searchableItems: SearchableItem[] = [
     category: "Commands",
     icon: FileTextIcon,
     tags: ["docs", "generate", "documentation"],
+  },
+  // Build-related items
+  {
+    id: "build-history",
+    title: "Build History",
+    description: "View past build executions",
+    href: "/deployment-pipeline?tab=history",
+    category: "Builds",
+    icon: HistoryIcon,
+    tags: ["build", "history", "deployment"],
+  },
+  {
+    id: "search-builds",
+    title: "Search Builds",
+    description: "Search build history and logs",
+    href: "/deployment-pipeline?tab=history&search=true",
+    category: "Builds",
+    icon: SearchIcon,
+    tags: ["build", "search", "logs"],
   },
 ];
 

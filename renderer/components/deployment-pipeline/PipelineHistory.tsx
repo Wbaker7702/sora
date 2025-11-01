@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "components/ui/card";
+import React, { useState, useMemo } from "react";
+import { Card, CardContent } from "components/ui/card";
 import { Badge } from "components/ui/badge";
 import { Button } from "components/ui/button";
 import { Input } from "components/ui/input";
@@ -16,6 +16,8 @@ import {
   FilterIcon,
   SearchIcon
 } from "lucide-react";
+import { BuildSearchService } from "lib/build-search";
+import { BuildRecord } from "types/builds";
 
 interface Pipeline {
   id: string;
@@ -39,14 +41,52 @@ export default function PipelineHistory({ pipelines }: PipelineHistoryProps) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [projectFilter, setProjectFilter] = useState<string>("all");
 
-  const filteredPipelines = pipelines.filter(pipeline => {
-    const matchesSearch = pipeline.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         pipeline.project.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || pipeline.status === statusFilter;
-    const matchesProject = projectFilter === "all" || pipeline.project === projectFilter;
-    
-    return matchesSearch && matchesStatus && matchesProject;
-  });
+  // Convert pipelines to BuildRecord format for search
+  const builds = useMemo(() => {
+    return pipelines.map(p => ({
+      id: p.id,
+      name: p.name,
+      project: p.project,
+      platform: "linux" as const,
+      status: p.status,
+      trigger: p.trigger,
+      createdAt: p.createdAt,
+      completedAt: p.updatedAt,
+      duration: p.duration,
+    }));
+  }, [pipelines]);
+
+  const searchService = useMemo(() => {
+    return new BuildSearchService(builds);
+  }, [builds]);
+
+  const filteredPipelines = useMemo(() => {
+    let filtered = pipelines;
+
+    // Apply search if query exists
+    if (searchTerm) {
+      const { text, filters } = BuildSearchService.parseQuery(searchTerm);
+      const searchResults = searchService.search({
+        query: text || searchTerm,
+        filters: {
+          ...filters,
+          status: statusFilter !== "all" ? [statusFilter as BuildRecord["status"]] : filters.status,
+          project: projectFilter !== "all" ? [projectFilter] : filters.project,
+        },
+      });
+      const resultIds = new Set(searchResults.builds.map(b => b.id));
+      filtered = pipelines.filter(p => resultIds.has(p.id));
+    } else {
+      // Simple filtering without search
+      filtered = pipelines.filter(pipeline => {
+        const matchesStatus = statusFilter === "all" || pipeline.status === statusFilter;
+        const matchesProject = projectFilter === "all" || pipeline.project === projectFilter;
+        return matchesStatus && matchesProject;
+      });
+    }
+
+    return filtered;
+  }, [pipelines, searchTerm, statusFilter, projectFilter, searchService]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -87,7 +127,7 @@ export default function PipelineHistory({ pipelines }: PipelineHistoryProps) {
           <div className="relative">
             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search pipelines..."
+              placeholder="Search pipelines... (e.g., 'production', 'status:failed')"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
