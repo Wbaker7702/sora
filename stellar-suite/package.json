@@ -5,7 +5,7 @@
   "description": "Helpful tools for stellar and soroban ecosystem",
   "version": "0.1.0",
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.105.0"
   },
   "repository": {
     "type": "git",
@@ -97,10 +97,10 @@
     "languages": []
   },
   "scripts": {
-    "vscode:prepublish": "yarn run compile",
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "yarn run compile && yarn run lint",
+    "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
   },
