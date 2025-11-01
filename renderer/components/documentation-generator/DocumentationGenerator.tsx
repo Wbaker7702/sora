@@ -23,9 +23,9 @@ import {
   AlertTriangleIcon,
   InfoIcon
 } from "lucide-react";
-import { ContractAnalyzer } from "./ContractAnalyzer";
-import { DocPreview } from "./DocPreview";
-import { DocTemplates } from "./DocTemplates";
+import ContractAnalyzer from "./ContractAnalyzer";
+import DocPreview from "./DocPreview";
+import DocTemplates from "./DocTemplates";
 
 interface ContractInfo {
   name: string;

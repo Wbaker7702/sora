@@ -51,6 +51,14 @@ const handler = {
       contractSettings
     );
   },
+  manageNasacoins: async (action, nasacoin, updatedNasacoin?) => {
+    return ipcRenderer.invoke(
+      "store:manageNasacoins",
+      action,
+      nasacoin,
+      updatedNasacoin
+    );
+  },
   isSorobanProject: async (directoryPath) => {
     return ipcRenderer.invoke("is-soroban-project", directoryPath);
   },

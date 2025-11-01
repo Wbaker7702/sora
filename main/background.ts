@@ -13,6 +13,7 @@ import { createWindow } from "./helpers";
 import { executeSorobanCommand } from "./helpers/soroban-helper";
 import { handleProjects } from "./helpers/manage-projects";
 import { handleIdentities } from "./helpers/manage-identities";
+import { handleNasacoins } from "./helpers/manage-nasacoins";
 import { findContracts } from "./helpers/find-contracts";
 import { checkEditors } from "./helpers/check-editors";
 import { openProjectInEditor } from "./helpers/open-project-in-editor";
@@ -152,6 +153,27 @@ const schema = {
         schedule: { type: "string" },
       },
       required: ["id", "name", "project"],
+    },
+  },
+  nasacoins: {
+    type: "array",
+    default: [],
+    items: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        name: { type: "string" },
+        symbol: { type: "string" },
+        contractId: { type: "string" },
+        network: {
+          type: "string",
+          enum: ["testnet", "mainnet", "futurenet", "local"],
+        },
+        balance: { type: "string" },
+        decimals: { type: "number" },
+        createdAt: { type: "string" },
+      },
+      required: ["id", "name", "symbol", "contractId", "network"],
     },
   },
 };
@@ -532,6 +554,31 @@ if (isProd) {
     }
   );
 
+  // Store: Nasacoins Handler
+  ipcMain.handle(
+    "store:manageNasacoins",
+    async (event, action, nasacoin, updatedNasacoin?) => {
+      try {
+        trackEvent("nasacoin_action", { action, nasacoin });
+        log.info(
+          "Nasacoin Interaction. Action:",
+          action,
+          nasacoin ? "Nasacoin: " + nasacoin.name : ""
+        );
+        const result = await handleNasacoins(
+          store,
+          action,
+          nasacoin,
+          updatedNasacoin
+        );
+        return result;
+      } catch (error) {
+        log.error("Error on managing nasacoins:", error);
+        throw error;
+      }
+    }
+  );
+
   ipcMain.handle(
     "store:manageContractEvents",
     async (event, action, contractEvents) => {
@@ -813,6 +860,111 @@ if (isProd) {
     });
   });
 
+  // Watch for build records from build scripts
+  function watchBuildRecords() {
+    const userData = app.getPath("userData");
+    // Also check home directory for cross-platform compatibility
+    // Build scripts write to ~/.sora/builds/pending
+    const os = require("os");
+    const homeDir = os.homedir();
+    const homePendingDir = path.join(homeDir, ".sora", "builds", "pending");
+    const homeProcessedDir = path.join(homeDir, ".sora", "builds", "processed");
+    
+    const pendingDir = path.join(userData, "builds", "pending");
+    const processedDir = path.join(userData, "builds", "processed");
+
+    // Ensure directories exist
+    if (!fs.existsSync(pendingDir)) {
+      fs.mkdirSync(pendingDir, { recursive: true });
+    }
+    if (!fs.existsSync(processedDir)) {
+      fs.mkdirSync(processedDir, { recursive: true });
+    }
+    if (!fs.existsSync(homePendingDir)) {
+      fs.mkdirSync(homePendingDir, { recursive: true });
+    }
+    if (!fs.existsSync(homeProcessedDir)) {
+      fs.mkdirSync(homeProcessedDir, { recursive: true });
+    }
+
+    // Function to process a build record file
+    const processBuildRecord = async (
+      filePath: string,
+      processedPath: string
+    ) => {
+      try {
+        // Wait a bit for file to be fully written
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const content = await readFile(filePath, "utf-8");
+        const buildRecord = JSON.parse(content);
+
+        // Validate build record has required fields
+        if (!buildRecord.id) {
+          log.error(`Invalid build record in ${filePath}: missing id`);
+          return;
+        }
+
+        // Save to electron store
+        const builds = store.get("builds", []);
+        builds.push(buildRecord);
+        store.set("builds", builds);
+
+        // Logs are already in the build directory structure
+        // If logs exist, they should be at {userData}/builds/{buildId}/logs.txt
+
+        // Notify renderer
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send("build:completed", buildRecord);
+        }
+
+        // Move to processed directory
+        try {
+          fs.renameSync(filePath, processedPath);
+          log.info(`Processed build record: ${buildRecord.id}`);
+        } catch (renameError) {
+          log.error(`Error moving build record to processed: ${renameError}`);
+        }
+      } catch (error) {
+        log.error(`Error processing build record ${filePath}: ${error}`);
+      }
+    };
+
+    // Watch for new JSON files in userData pending directory
+    fs.watch(pendingDir, async (eventType, filename) => {
+      if (!filename || !filename.endsWith(".json")) {
+        return;
+      }
+
+      const filePath = path.join(pendingDir, filename);
+
+      // Only process 'rename' events (file creation)
+      if (eventType === "rename" && fs.existsSync(filePath)) {
+        const processedPath = path.join(processedDir, filename);
+        await processBuildRecord(filePath, processedPath);
+      }
+    });
+
+    // Also watch home directory for build scripts that write there
+    fs.watch(homePendingDir, async (eventType, filename) => {
+      if (!filename || !filename.endsWith(".json")) {
+        return;
+      }
+
+      const filePath = path.join(homePendingDir, filename);
+
+      // Only process 'rename' events (file creation)
+      if (eventType === "rename" && fs.existsSync(filePath)) {
+        const processedPath = path.join(homeProcessedDir, filename);
+        await processBuildRecord(filePath, processedPath);
+      }
+    });
+
+    log.info(`Watching for build records in: ${pendingDir}`);
+    log.info(`Also watching: ${homePendingDir}`);
+  }
+
   async function retrieveAndStoreIdentities() {
     try {
       const result = await executeSorobanCommand("keys", "ls");
@@ -851,6 +1003,9 @@ if (isProd) {
   });
 
   await retrieveAndStoreIdentities();
+
+  // Start watching for build records from build scripts
+  watchBuildRecords();
 
   if (isProd) {
     await mainWindow.loadURL("app://./projects");

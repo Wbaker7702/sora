@@ -64,11 +64,31 @@ function parseLogEntry(entry) {
 function formatCliOutput(result) {
     try {
         let output = "Command Output:\n\n";
-        const formattedResult = JSON.parse(result);
-        output += formattedResult
-            .split("\n")
-            .map((line) => `  ${line}`)
-            .join("\n");
+        // Try to parse as JSON first
+        let parsedResult;
+        try {
+            parsedResult = JSON.parse(result);
+            // If parsing succeeds, format it nicely
+            if (typeof parsedResult === "string") {
+                output += parsedResult
+                    .split("\n")
+                    .map((line) => `  ${line}`)
+                    .join("\n");
+            }
+            else {
+                output += JSON.stringify(parsedResult, null, 2)
+                    .split("\n")
+                    .map((line) => `  ${line}`)
+                    .join("\n");
+            }
+        }
+        catch {
+            // If not JSON, treat as plain string
+            output += result
+                .split("\n")
+                .map((line) => `  ${line}`)
+                .join("\n");
+        }
         return output;
     }
     catch (error) {

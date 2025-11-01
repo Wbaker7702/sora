@@ -29,6 +29,7 @@ import {
   ZapIcon,
   GitBranchIcon,
   HistoryIcon,
+  Coins,
 } from "lucide-react";
 
 interface SearchableItem {
@@ -128,6 +129,15 @@ const searchableItems: SearchableItem[] = [
     category: "Navigation",
     icon: BotIcon,
     tags: ["ai", "assistant", "cursor"],
+  },
+  {
+    id: "nasacoin-core",
+    title: "Nasacoin Core",
+    description: "Manage nasacoin tokens and contracts",
+    href: "/nasacoin-core",
+    category: "Navigation",
+    icon: Coins,
+    tags: ["nasacoin", "token", "contract", "crypto"],
   },
   {
     id: "settings",

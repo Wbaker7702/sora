@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "components/ui/alert";
 import { 
   PlayIcon, 
   PauseIcon, 
-  StopIcon, 
+  SquareIcon, 
   CheckCircleIcon, 
   XCircleIcon, 
   ClockIcon,
@@ -22,9 +22,9 @@ import {
   HistoryIcon,
   AlertTriangleIcon
 } from "lucide-react";
-import { PipelineConfig } from "./PipelineConfig";
-import { PipelineHistory } from "./PipelineHistory";
-import { PipelineLogs } from "./PipelineLogs";
+import PipelineConfig from "./PipelineConfig";
+import PipelineHistory from "./PipelineHistory";
+import PipelineLogs from "./PipelineLogs";
 import { BuildRecord } from "types/builds";
 
 interface PipelineStep {
@@ -271,7 +271,7 @@ export default function DeploymentPipelineComponent() {
                       </>
                     ) : (
                       <div className="text-sm text-muted-foreground">
-                        Platform: {build.platform} • Created: {new Date(pipeline.createdAt).toLocaleString()}
+                        Created: {new Date(pipeline.createdAt).toLocaleString()}
                       </div>
                     )}
 
@@ -284,7 +284,7 @@ export default function DeploymentPipelineComponent() {
                       )}
                       {pipeline.status === "running" && (
                         <Button variant="outline" onClick={() => handleStopPipeline(pipeline.id)}>
-                          <StopIcon className="h-4 w-4 mr-2" />
+                          <SquareIcon className="h-4 w-4 mr-2" />
                           Stop Pipeline
                         </Button>
                       )}

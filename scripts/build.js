@@ -3,6 +3,8 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const os = require('os');
 
 // Colors for console output
 const colors = {
@@ -96,6 +98,89 @@ function runTests() {
   return execCommand('npm run test');
 }
 
+// Helper function to get git commit hash
+function getGitCommit() {
+  try {
+    return execSync('git rev-parse HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim();
+  } catch (error) {
+    return undefined;
+  }
+}
+
+// Helper function to get git commit message
+function getGitCommitMessage() {
+  try {
+    return execSync('git log -1 --pretty=%B', { encoding: 'utf8', stdio: 'pipe' }).trim();
+  } catch (error) {
+    return undefined;
+  }
+}
+
+// Save build record to pending directory for Electron to process
+function saveBuildRecord(platform, success, errorMessage, startTime, logs = []) {
+  try {
+    const buildId = crypto.randomBytes(16).toString('hex');
+    const projectName = process.env.PROJECT_NAME || path.basename(process.cwd());
+    
+    // Normalize platform name to match BuildPlatform type
+    let normalizedPlatform = platform;
+    if (platform === 'mac-universal') {
+      normalizedPlatform = 'mac-universal';
+    } else if (platform === 'mac') {
+      normalizedPlatform = 'mac';
+    } else if (platform === 'linux') {
+      normalizedPlatform = 'linux';
+    } else if (platform === 'win32') {
+      normalizedPlatform = 'win32';
+    } else if (platform === 'win64') {
+      normalizedPlatform = 'win64';
+    } else {
+      normalizedPlatform = 'linux'; // default
+    }
+
+    const buildRecord = {
+      id: buildId,
+      name: `Build ${platform}`,
+      project: projectName,
+      platform: normalizedPlatform,
+      status: success ? 'completed' : 'failed',
+      trigger: process.env.CI ? 'git' : 'manual',
+      createdAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+      duration: Math.floor((Date.now() - startTime) / 1000),
+      error: errorMessage || undefined,
+      commitHash: process.env.GIT_COMMIT || getGitCommit(),
+      commitMessage: process.env.GIT_COMMIT_MESSAGE || getGitCommitMessage(),
+    };
+
+    // Determine temp directory - use .sora in home directory
+    const userHome = os.homedir();
+    const tempDir = path.join(userHome, '.sora', 'builds', 'pending');
+    const logDir = path.join(userHome, '.sora', 'builds', buildId);
+
+    // Ensure directories exist
+    fs.mkdirSync(tempDir, { recursive: true });
+    fs.mkdirSync(logDir, { recursive: true });
+
+    // Write build record to temp file (Electron will pick this up)
+    const tempFile = path.join(tempDir, `${buildId}.json`);
+    fs.writeFileSync(tempFile, JSON.stringify(buildRecord, null, 2), 'utf-8');
+
+    // Write logs if provided (they'll be moved by Electron watcher)
+    if (logs.length > 0) {
+      const logPath = path.join(logDir, 'logs.txt');
+      fs.writeFileSync(logPath, logs.join('\n'), 'utf-8');
+    }
+
+    log(`\n📦 Build record saved: ${buildId}`, 'green');
+    log(`   Location: ${tempFile}`, 'cyan');
+    return buildRecord;
+  } catch (error) {
+    log(`⚠️  Failed to save build record: ${error.message}`, 'yellow');
+    return null;
+  }
+}
+
 function buildApplication(platform = 'all') {
   log(`\n🏗️  Building application for ${platform}...`, 'blue');
   
@@ -115,7 +200,14 @@ function buildApplication(platform = 'all') {
     return false;
   }
 
-  return execCommand(command);
+  const startTime = Date.now();
+  const success = execCommand(command);
+  const errorMessage = success ? undefined : 'Build command failed';
+  
+  // Save build record (even if build failed)
+  saveBuildRecord(platform, success, errorMessage, startTime);
+  
+  return success;
 }
 
 function createReleasePackage() {
@@ -129,6 +221,11 @@ function main() {
   const skipTests = args.includes('--skip-tests');
   const skipLint = args.includes('--skip-lint');
   const production = args.includes('--production');
+
+  // Track overall build start time
+  const overallStartTime = Date.now();
+  let buildSuccess = true;
+  let buildError = undefined;
 
   log('🚀 SORA Build Script', 'bright');
   log('====================', 'bright');

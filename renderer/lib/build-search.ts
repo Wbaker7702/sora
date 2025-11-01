@@ -1,4 +1,4 @@
-import Fuse from "fuse.js";
+import Fuse, { FuseResult } from "fuse.js";
 import { BuildRecord, BuildFilters } from "types/builds";
 
 export interface SearchOptions {
@@ -71,9 +71,9 @@ export class BuildSearchService {
   }
 
   private applyFilters(
-    results: Fuse.FuseResult<BuildRecord>[],
+    results: FuseResult<BuildRecord>[],
     filters: BuildFilters
-  ): Fuse.FuseResult<BuildRecord>[] {
+  ): FuseResult<BuildRecord>[] {
     return results.filter((result) => {
       const build = result.item;
 
@@ -120,7 +120,7 @@ export class BuildSearchService {
   }
 
   private extractHighlights(
-    results: Fuse.FuseResult<BuildRecord>[],
+    results: FuseResult<BuildRecord>[],
     query: string
   ): Highlight[] {
     const highlights: Highlight[] = [];

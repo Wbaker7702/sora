@@ -35,6 +35,7 @@ import {
   BarChart3Icon,
   GitBranchIcon,
   FileTextIcon,
+  Coins,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -165,6 +166,15 @@ export default function Layout({ children }: LayoutProps) {
                         href: "/metrics",
                         icon: BarChart3Icon,
                         variant: router.pathname.startsWith("/metrics")
+                          ? "default"
+                          : "ghost",
+                      },
+                      {
+                        title: "Nasacoin Core",
+                        label: "",
+                        href: "/nasacoin-core",
+                        icon: Coins,
+                        variant: router.pathname.startsWith("/nasacoin-core")
                           ? "default"
                           : "ghost",
                       },

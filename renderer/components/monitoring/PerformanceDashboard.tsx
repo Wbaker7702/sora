@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { RefreshCw, Cpu, Memory, Network, Activity, AlertTriangle } from 'lucide-react';
+import { RefreshCw, Cpu, MemoryStick, Network, Activity, AlertTriangle } from 'lucide-react';
 import monitoring from '@/lib/monitoring';
 
 interface PerformanceMetrics {
@@ -145,7 +145,7 @@ const PerformanceDashboard: React.FC = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Memory Usage</CardTitle>
-                <Memory className="h-4 w-4 text-muted-foreground" />
+                <MemoryStick className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{getMemoryUsagePercentage().toFixed(1)}%</div>

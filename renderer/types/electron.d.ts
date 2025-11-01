@@ -13,6 +13,7 @@ interface Versions {
   manageProjects: (action, path?) => Promise<any>;
   manageIdentities: (action, identity?, newIdentity?) => Promise<any>;
   manageContractEvents: (action, contractSettings?) => Promise<any>;
+  manageNasacoins: (action, nasacoin?, updatedNasacoin?) => Promise<any>;
   isSorobanProject: (projectPath) => Promise<boolean>;
   isSorobanInstalled: () => Promise<any>;
   listContracts: (directoryPath) => Promise<any>;
