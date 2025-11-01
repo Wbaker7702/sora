@@ -1,7 +1,7 @@
 import fixPath from "fix-path";
 fixPath();
 
-import { app, ipcMain, dialog } from "electron";
+import { app, ipcMain, dialog, BrowserWindow } from "electron";
 import serve from "electron-serve";
 const { readFile } = require("fs").promises;
 
@@ -13,6 +13,7 @@ import { createWindow } from "./helpers";
 import { executeSorobanCommand } from "./helpers/soroban-helper";
 import { handleProjects } from "./helpers/manage-projects";
 import { handleIdentities } from "./helpers/manage-identities";
+import { handleNasacoins } from "./helpers/manage-nasacoins";
 import { findContracts } from "./helpers/find-contracts";
 import { checkEditors } from "./helpers/check-editors";
 import { openProjectInEditor } from "./helpers/open-project-in-editor";
@@ -101,6 +102,78 @@ const schema = {
     default: {
       threadId: "",
       assistantId: "",
+    },
+  },
+  builds: {
+    type: "array",
+    default: [],
+    items: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        name: { type: "string" },
+        project: { type: "string" },
+        platform: {
+          type: "string",
+          enum: ["mac", "linux", "win32", "win64", "mac-universal"],
+        },
+        status: {
+          type: "string",
+          enum: ["idle", "running", "completed", "failed", "paused"],
+        },
+        trigger: {
+          type: "string",
+          enum: ["manual", "git", "schedule"],
+        },
+        createdAt: { type: "string" },
+        completedAt: { type: "string" },
+        duration: { type: "number" },
+        error: { type: "string" },
+        commitHash: { type: "string" },
+        commitMessage: { type: "string" },
+        logPath: { type: "string" },
+      },
+      required: ["id", "name", "project", "platform", "status", "createdAt"],
+    },
+  },
+  buildConfigs: {
+    type: "array",
+    default: [],
+    items: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        name: { type: "string" },
+        project: { type: "string" },
+        trigger: {
+          type: "string",
+          enum: ["manual", "git", "schedule"],
+        },
+        gitBranch: { type: "string" },
+        schedule: { type: "string" },
+      },
+      required: ["id", "name", "project"],
+    },
+  },
+  nasacoins: {
+    type: "array",
+    default: [],
+    items: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        name: { type: "string" },
+        symbol: { type: "string" },
+        contractId: { type: "string" },
+        network: {
+          type: "string",
+          enum: ["testnet", "mainnet", "futurenet", "local"],
+        },
+        balance: { type: "string" },
+        decimals: { type: "number" },
+        createdAt: { type: "string" },
+      },
+      required: ["id", "name", "symbol", "contractId", "network"],
     },
   },
 };
@@ -481,6 +554,31 @@ if (isProd) {
     }
   );
 
+  // Store: Nasacoins Handler
+  ipcMain.handle(
+    "store:manageNasacoins",
+    async (event, action, nasacoin, updatedNasacoin?) => {
+      try {
+        trackEvent("nasacoin_action", { action, nasacoin });
+        log.info(
+          "Nasacoin Interaction. Action:",
+          action,
+          nasacoin ? "Nasacoin: " + nasacoin.name : ""
+        );
+        const result = await handleNasacoins(
+          store,
+          action,
+          nasacoin,
+          updatedNasacoin
+        );
+        return result;
+      } catch (error) {
+        log.error("Error on managing nasacoins:", error);
+        throw error;
+      }
+    }
+  );
+
   ipcMain.handle(
     "store:manageContractEvents",
     async (event, action, contractEvents) => {
@@ -613,6 +711,260 @@ if (isProd) {
     }
   );
 
+  // Builds IPC Handlers
+  const getBuildLogPath = (buildId: string): string => {
+    const userData = app.getPath("userData");
+    const buildDir = path.join(userData, "builds", buildId);
+    return path.join(buildDir, "logs.txt");
+  };
+
+  ipcMain.handle("builds:save", async (event, build) => {
+    try {
+      const builds = store.get("builds", []);
+      builds.push(build);
+      store.set("builds", builds);
+
+      // Save logs to file if provided
+      if (build.logPath || build.logs) {
+        const logPath = getBuildLogPath(build.id);
+        const buildDir = path.dirname(logPath);
+        if (!fs.existsSync(buildDir)) {
+          fs.mkdirSync(buildDir, { recursive: true });
+        }
+        const logContent = build.logs || "";
+        fs.writeFileSync(logPath, logContent, "utf-8");
+      }
+
+      // Notify renderer
+      const mainWindow = BrowserWindow.getAllWindows()[0];
+      if (mainWindow) {
+        mainWindow.webContents.send("build:completed", build);
+      }
+
+      return true;
+    } catch (error) {
+      log.error(`Error saving build: ${error}`);
+      return false;
+    }
+  });
+
+  ipcMain.handle("builds:getAll", async () => {
+    try {
+      return store.get("builds", []);
+    } catch (error) {
+      log.error(`Error getting builds: ${error}`);
+      return [];
+    }
+  });
+
+  ipcMain.handle("builds:get", async (event, id: string) => {
+    try {
+      const builds = store.get("builds", []);
+      return builds.find((b: any) => b.id === id) || null;
+    } catch (error) {
+      log.error(`Error getting build: ${error}`);
+      return null;
+    }
+  });
+
+  ipcMain.handle("builds:delete", async (event, id: string) => {
+    try {
+      const builds = store.get("builds", []);
+      const filtered = builds.filter((b: any) => b.id !== id);
+      store.set("builds", filtered);
+
+      // Delete log files
+      const logPath = getBuildLogPath(id);
+      if (fs.existsSync(logPath)) {
+        const buildDir = path.dirname(logPath);
+        fs.rmSync(buildDir, { recursive: true, force: true });
+      }
+
+      return true;
+    } catch (error) {
+      log.error(`Error deleting build: ${error}`);
+      return false;
+    }
+  });
+
+  ipcMain.handle("builds:getLogs", async (event, buildId: string) => {
+    try {
+      const logPath = getBuildLogPath(buildId);
+      if (fs.existsSync(logPath)) {
+        const data = await readFile(logPath, "utf-8");
+        return data;
+      }
+      return "";
+    } catch (error) {
+      log.error(`Error reading build logs: ${error}`);
+      return "";
+    }
+  });
+
+  ipcMain.handle("builds:searchLogs", async (event, buildId: string, query: string) => {
+    try {
+      const logPath = getBuildLogPath(buildId);
+      if (!fs.existsSync(logPath)) {
+        return [];
+      }
+
+      const logContent = await readFile(logPath, "utf-8");
+      const lines = logContent.split("\n");
+      const matches: any[] = [];
+
+      const regex = new RegExp(query, "gi");
+      lines.forEach((line, index) => {
+        const lineMatches: number[] = [];
+        let match;
+        while ((match = regex.exec(line)) !== null) {
+          lineMatches.push(match.index);
+        }
+        if (lineMatches.length > 0) {
+          matches.push({
+            line: index + 1,
+            content: line,
+            matches: lineMatches,
+          });
+        }
+      });
+
+      return matches;
+    } catch (error) {
+      log.error(`Error searching build logs: ${error}`);
+      return [];
+    }
+  });
+
+  ipcMain.handle("builds:saveLogs", async (event, buildId: string, logs: string) => {
+    try {
+      const logPath = getBuildLogPath(buildId);
+      const buildDir = path.dirname(logPath);
+      if (!fs.existsSync(buildDir)) {
+        fs.mkdirSync(buildDir, { recursive: true });
+      }
+      fs.writeFileSync(logPath, logs, "utf-8");
+      return true;
+    } catch (error) {
+      log.error(`Error saving build logs: ${error}`);
+      return false;
+    }
+  });
+
+  // Build watchers for real-time updates
+  const buildWatchers = new Set<Electron.WebContents>();
+
+  ipcMain.handle("builds:subscribe", (event) => {
+    buildWatchers.add(event.sender);
+    event.sender.on("destroyed", () => {
+      buildWatchers.delete(event.sender);
+    });
+  });
+
+  // Watch for build records from build scripts
+  function watchBuildRecords() {
+    const userData = app.getPath("userData");
+    // Also check home directory for cross-platform compatibility
+    // Build scripts write to ~/.sora/builds/pending
+    const os = require("os");
+    const homeDir = os.homedir();
+    const homePendingDir = path.join(homeDir, ".sora", "builds", "pending");
+    const homeProcessedDir = path.join(homeDir, ".sora", "builds", "processed");
+    
+    const pendingDir = path.join(userData, "builds", "pending");
+    const processedDir = path.join(userData, "builds", "processed");
+
+    // Ensure directories exist
+    if (!fs.existsSync(pendingDir)) {
+      fs.mkdirSync(pendingDir, { recursive: true });
+    }
+    if (!fs.existsSync(processedDir)) {
+      fs.mkdirSync(processedDir, { recursive: true });
+    }
+    if (!fs.existsSync(homePendingDir)) {
+      fs.mkdirSync(homePendingDir, { recursive: true });
+    }
+    if (!fs.existsSync(homeProcessedDir)) {
+      fs.mkdirSync(homeProcessedDir, { recursive: true });
+    }
+
+    // Function to process a build record file
+    const processBuildRecord = async (
+      filePath: string,
+      processedPath: string
+    ) => {
+      try {
+        // Wait a bit for file to be fully written
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const content = await readFile(filePath, "utf-8");
+        const buildRecord = JSON.parse(content);
+
+        // Validate build record has required fields
+        if (!buildRecord.id) {
+          log.error(`Invalid build record in ${filePath}: missing id`);
+          return;
+        }
+
+        // Save to electron store
+        const builds = store.get("builds", []);
+        builds.push(buildRecord);
+        store.set("builds", builds);
+
+        // Logs are already in the build directory structure
+        // If logs exist, they should be at {userData}/builds/{buildId}/logs.txt
+
+        // Notify renderer
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send("build:completed", buildRecord);
+        }
+
+        // Move to processed directory
+        try {
+          fs.renameSync(filePath, processedPath);
+          log.info(`Processed build record: ${buildRecord.id}`);
+        } catch (renameError) {
+          log.error(`Error moving build record to processed: ${renameError}`);
+        }
+      } catch (error) {
+        log.error(`Error processing build record ${filePath}: ${error}`);
+      }
+    };
+
+    // Watch for new JSON files in userData pending directory
+    fs.watch(pendingDir, async (eventType, filename) => {
+      if (!filename || !filename.endsWith(".json")) {
+        return;
+      }
+
+      const filePath = path.join(pendingDir, filename);
+
+      // Only process 'rename' events (file creation)
+      if (eventType === "rename" && fs.existsSync(filePath)) {
+        const processedPath = path.join(processedDir, filename);
+        await processBuildRecord(filePath, processedPath);
+      }
+    });
+
+    // Also watch home directory for build scripts that write there
+    fs.watch(homePendingDir, async (eventType, filename) => {
+      if (!filename || !filename.endsWith(".json")) {
+        return;
+      }
+
+      const filePath = path.join(homePendingDir, filename);
+
+      // Only process 'rename' events (file creation)
+      if (eventType === "rename" && fs.existsSync(filePath)) {
+        const processedPath = path.join(homeProcessedDir, filename);
+        await processBuildRecord(filePath, processedPath);
+      }
+    });
+
+    log.info(`Watching for build records in: ${pendingDir}`);
+    log.info(`Also watching: ${homePendingDir}`);
+  }
+
   async function retrieveAndStoreIdentities() {
     try {
       const result = await executeSorobanCommand("keys", "ls");
@@ -651,6 +1003,9 @@ if (isProd) {
   });
 
   await retrieveAndStoreIdentities();
+
+  // Start watching for build records from build scripts
+  watchBuildRecords();
 
   if (isProd) {
     await mainWindow.loadURL("app://./projects");

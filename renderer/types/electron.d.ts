@@ -13,6 +13,7 @@ interface Versions {
   manageProjects: (action, path?) => Promise<any>;
   manageIdentities: (action, identity?, newIdentity?) => Promise<any>;
   manageContractEvents: (action, contractSettings?) => Promise<any>;
+  manageNasacoins: (action, nasacoin?, updatedNasacoin?) => Promise<any>;
   isSorobanProject: (projectPath) => Promise<boolean>;
   isSorobanInstalled: () => Promise<any>;
   listContracts: (directoryPath) => Promise<any>;
@@ -45,6 +46,17 @@ interface Versions {
   ) => Promise<void>;
   clearConversation: (assistantType: "general" | "cli") => Promise<void>;
   getConversation: (assistantType: "general" | "cli") => Promise<any>;
+  builds: {
+    save: (build: any) => Promise<boolean>;
+    getAll: () => Promise<any[]>;
+    get: (id: string) => Promise<any | null>;
+    delete: (id: string) => Promise<boolean>;
+    getLogs: (buildId: string) => Promise<string>;
+    searchLogs: (buildId: string, query: string) => Promise<any[]>;
+    saveLogs: (buildId: string, logs: string) => Promise<boolean>;
+    on: (event: string, callback: (...args: unknown[]) => void) => () => void;
+    off: (event: string, callback: (...args: unknown[]) => void) => void;
+  };
   logError: (error: Error, errorInfo?: any) => Promise<void>;
   cursor: {
     saveApiKey: (apiKey: string) => Promise<boolean>;

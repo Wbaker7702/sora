@@ -32,6 +32,10 @@ import {
   BookKeyIcon,
   RadioIcon,
   BotIcon,
+  BarChart3Icon,
+  GitBranchIcon,
+  FileTextIcon,
+  Coins,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -153,6 +157,42 @@ export default function Layout({ children }: LayoutProps) {
                         href: "/lab",
                         icon: MonitorXIcon,
                         variant: router.pathname.startsWith("/lab")
+                          ? "default"
+                          : "ghost",
+                      },
+                      {
+                        title: "Metrics",
+                        label: "",
+                        href: "/metrics",
+                        icon: BarChart3Icon,
+                        variant: router.pathname.startsWith("/metrics")
+                          ? "default"
+                          : "ghost",
+                      },
+                      {
+                        title: "Nasacoin Core",
+                        label: "",
+                        href: "/nasacoin-core",
+                        icon: Coins,
+                        variant: router.pathname.startsWith("/nasacoin-core")
+                          ? "default"
+                          : "ghost",
+                      },
+                      {
+                        title: "Pipeline",
+                        label: "",
+                        href: "/deployment-pipeline",
+                        icon: GitBranchIcon,
+                        variant: router.pathname.startsWith("/deployment-pipeline")
+                          ? "default"
+                          : "ghost",
+                      },
+                      {
+                        title: "Docs",
+                        label: "",
+                        href: "/documentation-generator",
+                        icon: FileTextIcon,
+                        variant: router.pathname.startsWith("/documentation-generator")
                           ? "default"
                           : "ghost",
                       },

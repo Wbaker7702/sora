@@ -20,15 +20,23 @@
     "build:win32": "nextron build --win --ia32",
     "build:win64": "nextron build --win --x64",
     "build:production": "NODE_ENV=production nextron build",
-    "postinstall": "electron-builder install-app-deps",
+    "build:all": "node scripts/build.js all",
+    "build:platform": "node scripts/build.js",
+    "postinstall:electron": "electron-builder install-app-deps",
     "release": "electron-builder",
     "release:production": "NODE_ENV=production electron-builder",
-    "lint": "cd renderer && npm run lint",
-    "lint:fix": "cd renderer && npm run lint:fix",
-    "type-check": "cd renderer && npm run type-check",
-    "test": "cd renderer && npm run test",
-    "test:watch": "cd renderer && npm run test:watch",
-    "test:coverage": "cd renderer && npm run test:coverage",
+    "release:all": "node scripts/build.js all --release",
+    "deploy": "node scripts/deploy.js",
+    "deploy:local": "node scripts/deploy.js local",
+    "deploy:github": "node scripts/deploy.js github",
+    "deploy:release": "node scripts/deploy.js release",
+    "deploy:snap": "node scripts/deploy.js snap",
+    "lint": "eslint renderer --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint renderer --ext .ts,.tsx,.js,.jsx --fix",
+    "type-check": "tsc --noEmit -p renderer/tsconfig.json",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "clean": "rm -rf dist app .next node_modules/.cache",
     "clean:all": "rm -rf dist app .next node_modules/.cache node_modules",
     "audit": "npm audit",
@@ -37,7 +45,12 @@
     "deps:update": "npm update",
     "deps:check": "npm outdated",
     "precommit": "npm run lint && npm run type-check && npm run test",
-    "prebuild": "npm run lint && npm run type-check"
+    "prebuild": "npm run lint && npm run type-check",
+    "ci:build": "npm run build:all",
+    "ci:test": "npm run test && npm run lint && npm run type-check",
+    "ci:deploy": "npm run deploy:github",
+    "setup": "node scripts/setup.js",
+    "postinstall": "node scripts/setup.js"
   },
   "dependencies": {
     "@aptabase/electron": "^0.3.1",
@@ -60,6 +73,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-toast": "^1.2.15",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@sentry/electron": "^7.2.0",
     "@tailwindcss/postcss": "^4.1.14",
     "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",
@@ -69,7 +83,12 @@
     "electron-store": "^11.0.2",
     "electron-updater": "^6.6.8",
     "fix-path": "5.0.0",
+<<<<<<< HEAD
     "lucide-react": "^0.548.0",
+=======
+    "fuse.js": "^7.1.0",
+    "lucide-react": "^0.546.0",
+>>>>>>> c1fe425 (okay deploy this production please)
     "next-themes": "^0.4.6",
     "openai": "^6.6.0",
     "react-hook-form": "^7.51.5",
@@ -88,6 +107,7 @@
     "@babel/runtime": "^7.28.4",
     "@babel/runtime-corejs3": "^7.28.4",
     "@electron/notarize": "3.1.0",
+    "@eslint/js": "^9.39.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^24.9.1",
@@ -109,7 +129,8 @@
     "prismjs": "^1.30.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.46.2"
   },
   "packageManager": "yarn@4.10.3"
 }

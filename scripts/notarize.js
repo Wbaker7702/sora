@@ -1,4 +1,3 @@
-require("dotenv").config();
 const { notarize } = require("@electron/notarize");
 
 exports.default = async function notarizing(context) {
@@ -10,6 +9,15 @@ exports.default = async function notarizing(context) {
 
     const appName = context.packager.appInfo.productFilename;
 
+    // Only notarize if we have the required environment variables
+    if (!process.env.APPLE_ID || !process.env.APPLE_ID_PASSWORD || !process.env.TEAM_ID) {
+      console.log("⚠️  Skipping notarization: Missing required environment variables");
+      console.log("Required: APPLE_ID, APPLE_ID_PASSWORD, TEAM_ID");
+      return;
+    }
+
+    console.log(`🔐 Notarizing ${appName}...`);
+
     await notarize({
       appBundleId: "com.tolgayayci.sora",
       appPath: `${appOutDir}/${appName}.app`,
@@ -17,8 +25,10 @@ exports.default = async function notarizing(context) {
       appleIdPassword: process.env.APPLE_ID_PASSWORD,
       teamId: process.env.TEAM_ID,
     });
+
+    console.log("✅ Notarization completed successfully");
   } catch (error) {
-    console.error("Notarization failed:", error);
+    console.error("❌ Notarization failed:", error);
     if (error.response) {
       console.error("HTTP Response:", error.response);
     }
