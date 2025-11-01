@@ -38,6 +38,14 @@ const sidebars = {
     },
     {
       type: "category",
+      label: "Development",
+      items: [
+        "development/build-and-deploy",
+        "development/deployment-checklist",
+      ],
+    },
+    {
+      type: "category",
       label: "Troubleshooting",
       items: ["troubleshooting/common-issues", "troubleshooting/faq"],
     },
