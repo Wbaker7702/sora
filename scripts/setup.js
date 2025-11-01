@@ -21,6 +21,11 @@ function log(message, color = 'reset') {
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
 
+if (process.env.SKIP_SORA_SETUP === '1') {
+  log('⚠️  Skipping SORA setup script because SKIP_SORA_SETUP=1', 'yellow');
+  process.exit(0);
+}
+
 function execCommand(command, options = {}) {
   try {
     execSync(command, { 

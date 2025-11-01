@@ -30,22 +30,12 @@ export function validateRegexPattern(regexPattern: string): RegexValidationResul
   const issues: RegexIssue[] = [];
   const suggestions: string[] = [];
 
-  // Find all character classes in the pattern
-  const characterClassRegex = /\[([^\]]*)\]/g;
-  let match;
-  let patternIndex = 0;
+  const normalizedPattern = normalizePattern(regexPattern);
+  const characterClasses = extractCharacterClasses(normalizedPattern);
 
-  while ((match = characterClassRegex.exec(regexPattern)) !== null) {
-    const fullMatch = match[0];
-    const content = match[1];
-    const startPos = match.index;
-    const endPos = startPos + fullMatch.length;
-
-    // Check for problematic ranges
-    const rangeIssues = validateCharacterClass(content, startPos);
+  for (const charClass of characterClasses) {
+    const rangeIssues = validateCharacterClass(charClass.content, charClass.start);
     issues.push(...rangeIssues);
-
-    patternIndex = endPos;
   }
 
   // Generate suggestions based on issues found
@@ -58,6 +48,158 @@ export function validateRegexPattern(regexPattern: string): RegexValidationResul
     issues,
     suggestions
   };
+}
+
+function normalizePattern(pattern: string): string {
+  if (!pattern) {
+    return '';
+  }
+
+  const trimmed = pattern.trim();
+
+  if (!trimmed.startsWith('/')) {
+    return trimmed;
+  }
+
+  for (let i = trimmed.length - 1; i > 0; i--) {
+    if (trimmed[i] === '/' && !isCharEscaped(trimmed, i)) {
+      return trimmed.slice(1, i);
+    }
+  }
+
+  return trimmed;
+}
+
+function extractCharacterClasses(pattern: string): Array<{ content: string; start: number; end: number }> {
+  const classes: Array<{ content: string; start: number; end: number }> = [];
+
+  let inClass = false;
+  let buffer = '';
+  let classStart = -1;
+
+  for (let i = 0; i < pattern.length; i++) {
+    const char = pattern[i];
+
+    if (!inClass) {
+      if (char === '[') {
+        inClass = true;
+        classStart = i;
+        buffer = '';
+      }
+      continue;
+    }
+
+    if (char === '\\') {
+      if (i + 1 < pattern.length) {
+        buffer += char + pattern[i + 1];
+        i += 1;
+      }
+      continue;
+    }
+
+    if (char === ']') {
+      classes.push({ content: buffer, start: classStart, end: i + 1 });
+      inClass = false;
+      buffer = '';
+      classStart = -1;
+      continue;
+    }
+
+    buffer += char;
+  }
+
+  return classes;
+}
+
+interface CharacterClassToken {
+  value: string;
+  start: number;
+  end: number;
+  isEscaped: boolean;
+}
+
+function tokenizeCharacterClass(content: string): CharacterClassToken[] {
+  const tokens: CharacterClassToken[] = [];
+
+  for (let i = 0; i < content.length; i++) {
+    const char = content[i];
+
+    if (char === '\\') {
+      if (i + 1 >= content.length) {
+        tokens.push({ value: '\\', start: i, end: i + 1, isEscaped: true });
+        continue;
+      }
+
+      const next = content[i + 1];
+
+      if (next === 'x' && i + 3 < content.length && isHexDigit(content[i + 2]) && isHexDigit(content[i + 3])) {
+        const value = content.slice(i, i + 4);
+        tokens.push({ value, start: i, end: i + 4, isEscaped: true });
+        i += 3;
+        continue;
+      }
+
+      if (next === 'u' && i + 5 < content.length && isHexDigit(content[i + 2]) && isHexDigit(content[i + 3]) && isHexDigit(content[i + 4]) && isHexDigit(content[i + 5])) {
+        const value = content.slice(i, i + 6);
+        tokens.push({ value, start: i, end: i + 6, isEscaped: true });
+        i += 5;
+        continue;
+      }
+
+      const value = char + next;
+      tokens.push({ value, start: i, end: i + 2, isEscaped: true });
+      i += 1;
+      continue;
+    }
+
+    tokens.push({ value: char, start: i, end: i + 1, isEscaped: false });
+  }
+
+  return tokens;
+}
+
+function isHexDigit(char: string): boolean {
+  return /[0-9a-fA-F]/.test(char);
+}
+
+function tokenToChar(token: CharacterClassToken): string | null {
+  if (!token) {
+    return null;
+  }
+
+  if (!token.isEscaped) {
+    return token.value;
+  }
+
+  if (token.value.startsWith('\\x') && token.value.length === 4) {
+    const code = Number.parseInt(token.value.slice(2), 16);
+    if (!Number.isNaN(code)) {
+      return String.fromCharCode(code);
+    }
+  }
+
+  if (token.value.startsWith('\\u') && token.value.length === 6) {
+    const code = Number.parseInt(token.value.slice(2), 16);
+    if (!Number.isNaN(code)) {
+      return String.fromCharCode(code);
+    }
+  }
+
+  if (token.value.length === 2) {
+    const escapeChar = token.value[1];
+    switch (escapeChar) {
+      case 'n': return '\n';
+      case 't': return '\t';
+      case 'r': return '\r';
+      case 'b': return '\b';
+      case 'f': return '\f';
+      case 'v': return '\v';
+      case '0': return '\0';
+      default: return escapeChar;
+    }
+  }
+
+  return token.value[token.value.length - 1] ?? null;
 }
 
 /**
@@ -81,7 +223,7 @@ function validateCharacterClass(content: string, offset: number): RegexIssue[] {
     if (problematicChars.length > 0) {
       issues.push({
         type: 'problematic_range',
-        message: `Range [${range.start}-${range.end}] includes unexpected characters: ${problematicChars.join(', ')}`,
+        message: `Range [${range.start}-${range.end}] includes unexpected characters: ${problematicChars.join(' ')}`,
         position: { start: offset + range.startPos, end: offset + range.endPos },
         severity: 'error',
         suggestedFix: `Consider using [${range.start}${escapeForRegex(String.fromCharCode(range.start.charCodeAt(0) + 1))}-${range.end}] or [${range.start}${escapeForRegex(String.fromCharCode(range.end.charCodeAt(0) - 1))}${range.end}]`
@@ -89,7 +231,7 @@ function validateCharacterClass(content: string, offset: number): RegexIssue[] {
     }
     
     // Check for invalid ranges (end before start)
-    if (range.start > range.end) {
+    if (range.start.charCodeAt(0) > range.end.charCodeAt(0)) {
       issues.push({
         type: 'invalid_range',
         message: `Invalid range: ${range.start}-${range.end} (end character comes before start)`,
@@ -106,7 +248,7 @@ function validateCharacterClass(content: string, offset: number): RegexIssue[] {
       type: 'unescaped_dash',
       message: `Unescaped dash at position ${dash.position + 1} may create unintended range`,
       position: { start: offset + dash.position, end: offset + dash.position + 1 },
-      severity: 'warning',
+      severity: 'error',
       suggestedFix: `Escape the dash: \\- or move it to the beginning/end of the character class`
     });
   }
@@ -119,12 +261,41 @@ function validateCharacterClass(content: string, offset: number): RegexIssue[] {
       type: 'overlapping_range',
       message: `Overlapping ranges detected: ${overlap.range1} and ${overlap.range2}`,
       position: { start: offset, end: offset + content.length },
-      severity: 'warning',
+      severity: 'error',
       suggestedFix: `Consider combining ranges: [${overlap.suggested}]`
     });
   }
 
   return issues;
+}
+
+function isCharEscaped(content: string, index: number): boolean {
+  let backslashCount = 0;
+  let cursor = index - 1;
+
+  while (cursor >= 0 && content[cursor] === '\\') {
+    backslashCount += 1;
+    cursor -= 1;
+  }
+
+  return backslashCount % 2 === 1;
+}
+
+function isAlphanumericOrLetter(char: string): boolean {
+  if (!char) {
+    return false;
+  }
+
+  const code = char.charCodeAt(0);
+
+  if (code >= 48 && code <= 57) {
+    return true; // digits
+  }
+
+  const lower = char.toLowerCase();
+  const upper = char.toUpperCase();
+
+  return lower !== upper;
 }
 
 /**
@@ -150,46 +321,37 @@ function parseCharacterClass(content: string): {
     isEscaped: boolean;
   }> = [];
   const unescapedDashes: Array<{ position: number }> = [];
-  
-  let i = 0;
-  while (i < content.length) {
-    const char = content[i];
-    
-    // Check for escaped character
-    if (char === '\\') {
-      i += 2; // Skip the backslash and the next character
-      continue;
-    }
-    
-    // Check for dash that might create a range
-    if (char === '-' && i > 0 && i < content.length - 1) {
-      const prevChar = content[i - 1];
-      const nextChar = content[i + 1];
-      
-      // Check if the previous character is escaped
-      const isPrevEscaped = i > 1 && content[i - 2] === '\\';
-      
-      if (isPrevEscaped) {
-        // This dash is escaped, so it's not creating a range
-        // Don't add to unescapedDashes since it's intentionally escaped
-      } else if (isValidRange(prevChar, nextChar)) {
-        const rangeChars = getCharacterRange(prevChar, nextChar);
+  const tokens = tokenizeCharacterClass(content);
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+
+    if (token.value === '-' && !token.isEscaped && i > 0 && i < tokens.length - 1) {
+      const prevToken = tokens[i - 1];
+      const nextToken = tokens[i + 1];
+
+      const startChar = tokenToChar(prevToken);
+      const endChar = tokenToChar(nextToken);
+
+      const isAlphanumericRange = startChar !== null && endChar !== null && isAlphanumericOrLetter(startChar) && isAlphanumericOrLetter(endChar);
+      const isEscapeRange = prevToken.isEscaped || nextToken.isEscaped;
+
+      if ((isAlphanumericRange || isEscapeRange) && startChar !== null && endChar !== null) {
+        const rangeChars = getCharacterRange(startChar, endChar);
         ranges.push({
-          start: prevChar,
-          end: nextChar,
+          start: startChar,
+          end: endChar,
           characters: rangeChars,
-          startPos: i - 1,
-          endPos: i + 1,
+          startPos: prevToken.start,
+          endPos: nextToken.end - 1,
           isEscaped: false
         });
       } else {
-        unescapedDashes.push({ position: i });
+        unescapedDashes.push({ position: token.start });
       }
     }
-    
-    i++;
   }
-  
+
   return { ranges, unescapedDashes };
 }
 
@@ -197,7 +359,11 @@ function parseCharacterClass(content: string): {
  * Checks if a character range is valid (start <= end)
  */
 function isValidRange(start: string, end: string): boolean {
-  return start <= end;
+  if (!start || !end) {
+    return false;
+  }
+
+  return start.charCodeAt(0) <= end.charCodeAt(0);
 }
 
 /**
@@ -226,8 +392,6 @@ function findProblematicCharacters(range: string[]): string[] {
     
     // Check for characters that are often unexpected in common ranges
     if (
-      // ASCII control characters (0-31)
-      (code >= 0 && code <= 31) ||
       // Common problematic characters in ranges
       char === '[' || char === ']' || char === '^' || char === '_' || char === '`' ||
       char === '\\' || char === '|' || char === '{' || char === '}' ||
@@ -297,16 +461,28 @@ function findOverlappingRanges(ranges: Array<{start: string, end: string, startP
  * Checks if two ranges overlap
  */
 function rangesOverlap(range1: {start: string, end: string}, range2: {start: string, end: string}): boolean {
-  return range1.start <= range2.end && range2.start <= range1.end;
+  const start1 = range1.start.charCodeAt(0);
+  const end1 = range1.end.charCodeAt(0);
+  const start2 = range2.start.charCodeAt(0);
+  const end2 = range2.end.charCodeAt(0);
+
+  if (start1 > end1 || start2 > end2) {
+    return false;
+  }
+
+  const overlaps = start1 <= end2 && start2 <= end1;
+  const containment = (start1 >= start2 && end1 <= end2) || (start2 >= start1 && end2 <= end1);
+
+  return overlaps && !containment;
 }
 
 /**
  * Combines two overlapping ranges
  */
 function combineRanges(range1: {start: string, end: string}, range2: {start: string, end: string}): string {
-  const start = range1.start < range2.start ? range1.start : range2.start;
-  const end = range1.end > range2.end ? range1.end : range2.end;
-  return `${start}-${end}`;
+  const startCode = Math.min(range1.start.charCodeAt(0), range2.start.charCodeAt(0));
+  const endCode = Math.max(range1.end.charCodeAt(0), range2.end.charCodeAt(0));
+  return `${String.fromCharCode(startCode)}-${String.fromCharCode(endCode)}`;
 }
 
 /**
