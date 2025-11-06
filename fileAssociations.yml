@@ -1,0 +1,54 @@
+# File associations configuration for Sora Enterprise
+# This file defines which file types should be associated with the application
+
+fileAssociations:
+  - ext: toml
+    name: TOML File
+    description: TOML Configuration File
+    icon: resources/icons/toml.ico
+    role: Editor
+    mimeType: application/toml
+  
+  - ext: wasm
+    name: WebAssembly File
+    description: WebAssembly Binary File
+    icon: resources/icons/wasm.ico
+    role: Viewer
+    mimeType: application/wasm
+  
+  - ext: rs
+    name: Rust Source File
+    description: Rust Programming Language Source File
+    icon: resources/icons/rust.ico
+    role: Editor
+    mimeType: text/x-rust
+  
+  - ext: stellar
+    name: Stellar File
+    description: Stellar Smart Contract File
+    icon: resources/icons/stellar.ico
+    role: Editor
+    mimeType: application/stellar
+  
+  - ext: soroban
+    name: Soroban File
+    description: Soroban Smart Contract File
+    icon: resources/icons/soroban.ico
+    role: Editor
+    mimeType: application/soroban
+
+protocols:
+  - name: sora
+    schemes:
+      - sora
+    role: Editor
+  
+  - name: stellar
+    schemes:
+      - stellar
+    role: Viewer
+  
+  - name: soroban
+    schemes:
+      - soroban
+    role: Editor

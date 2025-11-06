@@ -1,0 +1,182 @@
+appId: com.electron.sora.enterprise
+productName: Sora Enterprise
+copyright: Copyright © 2024 Tolga Yaycı
+directories:
+  output: dist
+  buildResources: resources
+files:
+  - from: .
+    filter:
+      - package.json
+      - app
+      - "!app/renderer/.next/cache"
+      - "!app/renderer/.next/server/pages-manifest.json"
+  - from: "node_modules"
+    filter:
+      - "**/*"
+      - "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}"
+      - "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}"
+      - "!**/node_modules/*.d.ts"
+      - "!**/node_modules/.bin"
+      - "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}"
+      - "!.editorconfig"
+      - "!**/._*"
+      - "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}"
+      - "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}"
+      - "!**/{appveyor.yml,.travis.yml,circle.yml}"
+      - "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+extraResources:
+  - from: "resources/licenses"
+    to: "licenses"
+    filter: "**/*"
+  - from: "resources/docs"
+    to: "docs"
+    filter: "**/*"
+asarUnpack:
+  - "**/*.node"
+  - "**/node_modules/sharp/**/*"
+  - "**/node_modules/@img/**/*"
+compression: maximum
+afterSign: "scripts/notarize.js"
+mac:
+  notarize: true
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: "scripts/entitlements.mac.plist"
+  entitlementsInherit: "scripts/entitlements.mac.plist"
+  category: public.app-category.developer-tools
+  minimumSystemVersion: "10.15.0"
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+    - target: zip
+      arch:
+        - x64
+        - arm64
+    - target: pkg
+      arch:
+        - x64
+        - arm64
+  publish:
+    - provider: github
+      protocol: https
+    - provider: generic
+      url: https://releases.example.com/sora
+dmg:
+  sign: false
+  title: Sora Enterprise
+  icon: resources/icon.icns
+  background: resources/background.png
+  window:
+    width: 600
+    height: 400
+  contents:
+    - x: 150
+      y: 190
+      type: file
+    - x: 450
+      y: 190
+      type: link
+      path: /Applications
+linux:
+  category: Development
+  synopsis: Soroban Desktop Application for Enterprise
+  description: Enterprise version of Sora - Soroban Desktop Application with advanced features
+  vendor: Tolga Yaycı
+  maintainer: Tolga Yaycı <tolgayayci@protonmail.com>
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: snap
+      arch:
+        - x64
+    - target: deb
+      arch:
+        - x64
+    - target: rpm
+      arch:
+        - x64
+  icon: resources/icon.png
+  desktop:
+    entry: Sora Enterprise
+    name: Sora Enterprise
+    comment: Soroban Desktop Application
+    terminal: false
+    type: Application
+    categories:
+      - Development
+      - Utility
+  publish:
+    - provider: github
+      protocol: https
+    - provider: generic
+      url: https://releases.example.com/sora
+snap:
+  confinement: strict
+  grade: stable
+  plugs:
+    - default
+    - home
+    - network
+    - network-bind
+    - removable-media
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - ia32
+    - target: portable
+      arch:
+        - x64
+    - target: msi
+      arch:
+        - x64
+  icon: resources/icon.ico
+  certificateSubjectName: "Tolga Yaycı"
+  signingHashAlgorithms:
+    - sha256
+  publish:
+    - provider: github
+      protocol: https
+    - provider: generic
+      url: https://releases.example.com/sora
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  allowElevation: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  menuCategory: true
+  shortcutName: Sora Enterprise
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+  perMachine: false
+  installerIcon: resources/icon.ico
+  uninstallerIcon: resources/icon.ico
+  installerHeader: resources/installer-header.bmp
+  installerSidebar: resources/installer-sidebar.bmp
+  uninstallerSidebar: resources/installer-sidebar.bmp
+  license: LICENSE
+  include: scripts/installer.nsh
+  differentialPackage: true
+msi:
+  oneClick: false
+  perMachine: false
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+  shortcutName: Sora Enterprise
+  upgradeCode: "12345678-1234-1234-1234-123456789012"
+portable:
+  artifactName: "${productName}-${version}-portable.${ext}"
+  requestExecutionLevel: user
+publish:
+  - provider: github
+    owner: tolgayayci
+    repo: sora
+    releaseType: release
+    publishAutoUpdate: true
+  - provider: generic
+    url: https://releases.example.com/sora
+    channel: stable

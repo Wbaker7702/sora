@@ -1,0 +1,101 @@
+{
+  "enterprise": {
+    "enabled": true,
+    "name": "Sora Enterprise",
+    "version": "0.2.1-enterprise",
+    "features": {
+      "advancedAnalytics": true,
+      "teamCollaboration": true,
+      "prioritySupport": true,
+      "customBranding": true,
+      "sso": true,
+      "auditLogs": true,
+      "advancedSecurity": true
+    },
+    "build": {
+      "compression": "maximum",
+      "asar": true,
+      "asarUnpack": [
+        "**/*.node",
+        "**/node_modules/sharp/**/*",
+        "**/node_modules/@img/**/*"
+      ],
+      "electronVersion": "38.4.0"
+    },
+    "security": {
+      "codeSign": true,
+      "notarize": true,
+      "hardenedRuntime": true,
+      "entitlements": true
+    },
+    "distribution": {
+      "autoUpdate": true,
+      "channels": ["stable", "beta", "alpha"],
+      "releaseNotes": true,
+      "differentialUpdates": true
+    },
+    "platforms": {
+      "mac": {
+        "targets": ["dmg", "zip", "pkg"],
+        "architectures": ["x64", "arm64"],
+        "universal": true,
+        "minimumSystemVersion": "10.15.0"
+      },
+      "windows": {
+        "targets": ["nsis", "portable", "msi"],
+        "architectures": ["x64", "ia32"],
+        "certificateRequired": true
+      },
+      "linux": {
+        "targets": ["AppImage", "snap", "deb", "rpm"],
+        "architectures": ["x64"]
+      }
+    },
+    "files": {
+      "include": [
+        "package.json",
+        "app/**/*",
+        "node_modules/**/*"
+      ],
+      "exclude": [
+        "**/*.map",
+        "**/*.md",
+        "**/test/**",
+        "**/tests/**",
+        "**/__tests__/**",
+        "**/example/**",
+        "**/examples/**",
+        "**/*.d.ts",
+        "**/node_modules/.bin/**",
+        "**/.DS_Store",
+        "**/.git/**",
+        "**/.github/**",
+        "**/npm-debug.log",
+        "**/yarn.lock",
+        "**/.yarn-integrity",
+        "**/.yarn-metadata.json"
+      ],
+      "extraResources": [
+        {
+          "from": "resources/licenses",
+          "to": "licenses"
+        },
+        {
+          "from": "resources/docs",
+          "to": "docs"
+        },
+        {
+          "from": "resources/templates",
+          "to": "templates"
+        }
+      ]
+    },
+    "metadata": {
+      "copyright": "Copyright © 2024 Tolga Yaycı",
+      "license": "SEE LICENSE IN LICENSE",
+      "category": "Development Tools",
+      "homepage": "https://github.com/tolgayayci/sora",
+      "repository": "https://github.com/tolgayayci/sora.git"
+    }
+  }
+}

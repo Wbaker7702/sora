@@ -1,0 +1,13 @@
+{
+  "version": "0.2.1-enterprise",
+  "buildDate": "2025-11-05T19:17:14.911Z",
+  "features": {
+    "advancedAnalytics": true,
+    "teamCollaboration": true,
+    "prioritySupport": true,
+    "customBranding": true,
+    "sso": true,
+    "auditLogs": true,
+    "advancedSecurity": true
+  }
+}
