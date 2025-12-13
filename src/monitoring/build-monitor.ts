@@ -147,8 +147,28 @@ class BuildMonitor {
       // Check for common build issues
       const distPath = join(process.cwd(), 'dist');
       if (existsSync(distPath)) {
-        const files = execSync(`find ${distPath} -type f -name "*.js" | head -10`, { encoding: 'utf8' });
-        if (!files.trim()) {
+        // Recursively find up to 10 ".js" files in distPath (no shell execution)
+        const jsFiles: string[] = [];
+        function findJsFiles(dir: string) {
+          if (jsFiles.length >= 10) return;
+          let entries;
+          try {
+            entries = require('fs').readdirSync(dir, { withFileTypes: true });
+          } catch (e) {
+            return;
+          }
+          for (const entry of entries) {
+            if (jsFiles.length >= 10) break;
+            const entryPath = require('path').join(dir, entry.name);
+            if (entry.isDirectory()) {
+              findJsFiles(entryPath);
+            } else if (entry.isFile() && entry.name.endsWith('.js')) {
+              jsFiles.push(entryPath);
+            }
+          }
+        }
+        findJsFiles(distPath);
+        if (jsFiles.length === 0) {
           this.addWarning('No JavaScript files found in dist directory');
         }
       }
