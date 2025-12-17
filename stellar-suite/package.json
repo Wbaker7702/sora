@@ -106,6 +106,8 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
+    "@types/node": "24.x",
+    "@types/vscode": "^1.107.0",
     "@types/node": "25.x",
     "@types/vscode": "^1.106.1",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
