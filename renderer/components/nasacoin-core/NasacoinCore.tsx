@@ -197,6 +197,14 @@ export default function NasacoinCoreComponent() {
                   key={nasacoin.id}
                   nasacoin={nasacoin}
                   onNasacoinChange={refreshNasacoins}
+                  onViewDetails={(n) => {
+                    setSelectedNasacoin(n);
+                    setShowDetailModal(true);
+                  }}
+                  onTransfer={(n) => {
+                    setSelectedNasacoin(n);
+                    setShowTransferModal(true);
+                  }}
                 />
               ))}
             </div>

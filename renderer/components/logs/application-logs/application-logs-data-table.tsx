@@ -43,12 +43,14 @@ import {
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
-  data: any[];
+  data: TData[];
+  actions?: React.ReactNode;
 }
 
 export function ApplicationLogsDataTable<TData, TValue>({
   columns,
   data,
+  actions,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -60,6 +62,7 @@ export function ApplicationLogsDataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onSortingChange: setSorting,
     initialState: {
       pagination: {
         pageSize: 5,
@@ -78,20 +81,21 @@ export function ApplicationLogsDataTable<TData, TValue>({
         <Input
           placeholder="Search Between Logs"
           value={(table.getColumn("message")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
+          onChange={event =>
             table.getColumn("message")?.setFilterValue(event.target.value)
           }
           className="w-full"
         />
+        {actions}
         <DataTableViewOptions table={table} />
       </div>
       <div className="max-h-[calc(85vh-130px)] overflow-y-auto">
         <div className="rounded-md border ">
           <Table>
             <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
+              {table.getHeaderGroups().map(headerGroup => (
                 <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
+                  {headerGroup.headers.map(header => {
                     return (
                       <TableHead key={header.id}>
                         {header.isPlaceholder
@@ -108,12 +112,12 @@ export function ApplicationLogsDataTable<TData, TValue>({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
+                table.getRowModel().rows.map(row => (
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
                   >
-                    {row.getVisibleCells().map((cell) => (
+                    {row.getVisibleCells().map(cell => (
                       <TableCell key={cell.id} className="h-16">
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -143,7 +147,7 @@ export function ApplicationLogsDataTable<TData, TValue>({
             <p className="text-sm font-medium">Rows per page</p>
             <Select
               value={`${table.getState().pagination.pageSize}`}
-              onValueChange={(value) => {
+              onValueChange={value => {
                 table.setPageSize(Number(value));
               }}
             >
@@ -153,7 +157,7 @@ export function ApplicationLogsDataTable<TData, TValue>({
                 />
               </SelectTrigger>
               <SelectContent side="top">
-                {[5, 10, 15].map((pageSize) => (
+                {[5, 10, 15].map(pageSize => (
                   <SelectItem
                     key={pageSize}
                     value={`${pageSize}`}
