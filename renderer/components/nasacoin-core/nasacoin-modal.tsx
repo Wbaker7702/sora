@@ -55,7 +55,7 @@ export default function NasacoinModal({
   const { toast } = useToast();
 
   const form = useForm<NasacoinFormData>({
-    resolver: zodResolver(nasacoinFormSchema),
+    resolver: zodResolver(nasacoinFormSchema) as any,
     defaultValues: {
       name: "",
       symbol: "",

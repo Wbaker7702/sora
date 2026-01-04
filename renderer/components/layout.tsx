@@ -89,10 +89,10 @@ export default function Layout({ children }: LayoutProps) {
         </header>
         <TooltipProvider delayDuration={0}>
           <ResizablePanelGroup
-            direction="horizontal"
-            onLayout={(sizes: number[]) => {
+            orientation="horizontal"
+            onLayoutChange={(layout) => {
               document.cookie = `react-resizable-panels:layout=${JSON.stringify(
-                sizes
+                layout
               )}`;
             }}
             className="h-full items-stretch"
@@ -100,10 +100,16 @@ export default function Layout({ children }: LayoutProps) {
             <ResizablePanel
               defaultSize={defaultLayout[0]}
               collapsedSize={navCollapsedSize}
-              collapsible={false}
+              collapsible={true}
               minSize={10}
               maxSize={15}
-              onCollapse={handleCollapse}
+              onResize={(layout) => {
+                const collapsed = layout.asPercentage < 10;
+                setIsCollapsed(collapsed);
+                document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
+                  collapsed
+                )}`;
+              }}
               className={cn(
                 isCollapsed &&
                   "min-w-[50px] transition-all duration-300 ease-in-out"
