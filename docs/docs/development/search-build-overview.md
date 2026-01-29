@@ -288,9 +288,9 @@ fs.watch(pendingBuildsDir, async (eventType, filename) => {
 ## ?? Performance Considerations
 
 ### Current Performance
-- **Search Speed**: <300ms for typical datasets
+- **Search Speed**: &lt;300ms for typical datasets
 - **Log Loading**: Synchronous (can block for large files)
-- **Memory**: In-memory indexing (efficient for <1000 builds)
+- **Memory**: In-memory indexing (efficient for &lt;1000 builds)
 
 ### Optimization Opportunities
 1. **Large Datasets**: Implement pagination and lazy loading

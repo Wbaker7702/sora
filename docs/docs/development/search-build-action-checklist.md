@@ -114,7 +114,7 @@ Quick checklist for testing, verifying, and enhancing search/build features.
 ### Potential Issues to Verify
 
 - [ ] **Search Performance**: Test with 1000+ builds
-  - Expected: <300ms response time
+  - Expected: &lt;300ms response time
   - If slow: Implement caching or pagination
 
 - [ ] **Large Log Files**: Test with >10MB logs
@@ -207,17 +207,17 @@ Quick checklist for testing, verifying, and enhancing search/build features.
 ### Target Metrics
 
 - [ ] **Search Performance**
-  - Target: <300ms for 1000 builds
+  - Target: &lt;300ms for 1000 builds
   - Current: ___ ms
   - Status: ? / ?? / ?
 
 - [ ] **Log Loading**
-  - Target: <1s for 10MB file
+  - Target: &lt;1s for 10MB file
   - Current: ___ s
   - Status: ? / ?? / ?
 
 - [ ] **Memory Usage**
-  - Target: <100MB for 1000 builds
+  - Target: &lt;100MB for 1000 builds
   - Current: ___ MB
   - Status: ? / ?? / ?
 
