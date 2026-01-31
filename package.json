@@ -128,5 +128,8 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.2"
   },
-  "packageManager": "yarn@4.10.3"
+  "packageManager": "yarn@4.10.3",
+  "overrides": {
+    "tar": "7.5.7"
+  }
 }
