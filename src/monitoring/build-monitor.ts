@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { captureMessage, trackBuild, trackPerformance } from './sentry';
@@ -109,7 +109,7 @@ class BuildMonitor {
     try {
       const distPath = join(process.cwd(), 'dist');
       if (existsSync(distPath)) {
-        const sizeOutput = execSync(`du -sh ${distPath}`, { encoding: 'utf8' });
+        const sizeOutput = execFileSync('du', ['-sh', distPath], { encoding: 'utf8' });
         const sizeMatch = sizeOutput.match(/^(\d+(?:\.\d+)?)([KMGT]?)/);
         if (sizeMatch) {
           const size = parseFloat(sizeMatch[1]);
