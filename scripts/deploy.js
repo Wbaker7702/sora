@@ -195,8 +195,17 @@ function deployToSnap() {
   const snapFile = snapFiles[0];
   log(`📦 Found snap file: ${snapFile}`, 'cyan');
 
-  // Upload to snap store
-  if (!execCommand(`snapcraft upload dist/${snapFile}`)) {
+  // Upload to snap store without invoking a shell
+  const snapPath = path.join('dist', snapFile);
+  try {
+    log(`\n🔧 Executing: snapcraft upload ${snapPath}`, 'cyan');
+    require('child_process').execFileSync('snapcraft', ['upload', snapPath], {
+      stdio: 'inherit',
+      cwd: process.cwd()
+    });
+  } catch (error) {
+    log(`❌ Command failed: snapcraft upload ${snapPath}`, 'red');
+    log(`Error: ${error.message}`, 'red');
     return false;
   }
 
