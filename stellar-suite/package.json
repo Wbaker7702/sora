@@ -119,6 +119,6 @@
   },
   "dependencies": {
     "@vscode/webview-ui-toolkit": "^1.4.0",
-    "electron-log": "^5.4.3"
+    "electron-log": "^5.4.4"
   }
 }
