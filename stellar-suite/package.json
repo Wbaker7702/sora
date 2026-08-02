@@ -115,12 +115,18 @@
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.13.1",
     "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2",
+    "@vscode/test-electron": "^3.0.0",
     "eslint": "^8.54.0",
     "typescript": "^7.0.2"
+    "@typescript-eslint/eslint-plugin": "^8.62.1",
+    "@typescript-eslint/parser": "^8.62.1",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^10.6.0",
+    "typescript": "^6.0.3"
   },
   "dependencies": {
     "@vscode/webview-ui-toolkit": "^1.4.0",
-    "electron-log": "^5.4.3"
+    "electron-log": "^5.4.4"
   }
 }
