@@ -100,6 +100,8 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@babel/runtime": "^8.0.0",
+    "@babel/runtime-corejs3": "^7.28.4",
     "@babel/runtime": "^7.28.4",
     "@babel/runtime-corejs3": "^8.0.0",
     "@electron/notarize": "3.1.1",
@@ -125,7 +127,7 @@
     "prismjs": "^1.30.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "typescript": "^6.0.2",
+    "typescript": "^7.0.2",
     "typescript-eslint": "^8.46.2"
   },
   "packageManager": "yarn@4.10.3",
