@@ -182,20 +182,11 @@
   integrity sha512-xPyYSz1cMPnJQhl0CLMH68j3gprKZaTjG3s5Vi+fDgx+uhG9NOXwbVt52eFS8ECyXhyKcjDLCBEqBExKuiZb7Q==
 
 "@types/node@26.x":
-  version "26.1.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-26.1.1.tgz#bad758d601e97d6cf457d204ee76a35fce7bd119"
-  integrity sha512-nxAkRSVkN1Y0JC1W8ky/fTfkGsMmcrRsbx+3XoZE+rMOX71kLYTV7fLXpqud1GpbpP5TuffXFqfX7fH2GgZREw==
+  version "26.1.2"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-26.1.2.tgz#da79708f1f9c6294f4cdec8f455a3032b028808a"
+  integrity sha512-Vu4a5UFA9rIIFJ7rB/Vaafh9lrCQszopTCx6KjFboXTGQbPNasehVR5TEiithSDGyd1DEiUByggTZsg8jukeIg==
   dependencies:
     undici-types "~8.3.0"
-
-"@types/vscode@^1.110.0":
-  version "1.110.0"
-  resolved "https://registry.yarnpkg.com/@types/vscode/-/vscode-1.110.0.tgz#b6210c7d5e049003138bb17311644fe8b179dc8b"
-  integrity sha512-AGuxUEpU4F4mfuQjxPPaQVyuOMhs+VT/xRok1jiHVBubHK7lBRvCuOMZG0LKUwxncrPorJ5qq/uil3IdZBd5lA==
-"@types/semver@^7.5.0":
-  version "7.5.8"
-  resolved "https://registry.npmjs.org/@types/semver/-/semver-7.5.8.tgz"
-  integrity sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==
 
 "@types/vscode@^1.110.0":
   version "1.125.0"
@@ -313,10 +304,10 @@
     supports-color "^10.2.2"
     yargs "^18.0.0"
 
-"@vscode/test-electron@^3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@vscode/test-electron/-/test-electron-3.0.0.tgz#6a27d6992e4c89b2a229cbed3e990afe2b3575ef"
-  integrity sha512-TY5mC7aAjxSLDXsyjhrG8cJHgc/HLdiE5lvtW7hABYQrY24Qwozzr5UoO3HiuAM4Hzz4b7K/eZlwrCILj94CcA==
+"@vscode/test-electron@^2.5.2":
+  version "2.5.2"
+  resolved "https://registry.yarnpkg.com/@vscode/test-electron/-/test-electron-2.5.2.tgz#f7d4078e8230ce9c94322f2a29cc16c17954085d"
+  integrity sha512-8ukpxv4wYe0iWMRQU18jhzJOHkeGKbnw7xWRX3Zw1WJA4cEKbHcmmLPdPrPtL6rhDcrlCZN+xKRpv09n4gRHYg==
   dependencies:
     http-proxy-agent "^7.0.2"
     https-proxy-agent "^7.0.5"
