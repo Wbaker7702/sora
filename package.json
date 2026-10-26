@@ -75,7 +75,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sentry/electron": "^7.4.0",
     "@tailwindcss/postcss": "^4.1.14",
-    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-table": "^9.3.1",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
     "electron-log": "^5.4.3",
