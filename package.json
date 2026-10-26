@@ -102,7 +102,7 @@
   "devDependencies": {
     "@babel/runtime": "^8.0.0",
     "@babel/runtime-corejs3": "^7.28.4",
-    "@babel/runtime": "^7.28.4",
+    "@babel/runtime": "^8.0.7",
     "@babel/runtime-corejs3": "^8.0.0",
     "@electron/notarize": "3.1.1",
     "@eslint/js": "^10.0.1",
